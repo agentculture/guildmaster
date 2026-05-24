@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# AgentCulture: per-machine skills config (the .example is committed)
+.claude/skills.local.yaml
