@@ -106,6 +106,26 @@ asked for one; guildmaster fulfills the broadcast *role* via these two instead).
 Going live is gated on the steward→guildmaster cutover (`docs/cutover.md`) — no
 two live broadcasters.
 
+**Inventory verbs — `overview` & `show` (the read-only surfaces).** guildmaster
+owns the mesh's *inventory* surfaces per
+[issue #12](https://github.com/agentculture/guildmaster/issues/12) — the
+"what kit + config does an agent have?" view. The dividing rule from issue #12:
+**inventory → guildmaster; judgment ("how do agents relate / are they aligned?")
+→ steward.** Neither verb clones `steward overview`'s relationship graph.
+
+- `guild overview [--scope all|self <agent>]` — the supplier view: canonical
+  skill set + versions/origins, the `docs/skill-sources.md` ledger, and drift
+  signals (uncovered skills, per-agent kit gaps). Pure-Python, read-only, **no
+  `--apply`**. Pre-cutover the ledger has no downstream column, so drift is
+  inactive and the verb says so (reads whichever ledger is authoritative).
+- `guild show <path-or-suffix>` — one agent's full config: detected prompt file
+  (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), parallel `culture.yaml`, and the
+  `.claude/skills` index. Thin wrapper that shells out to the vendored
+  `agent-config` skill's `show.sh` (cite-don't-import from steward), mirroring
+  `steward show`. Path mode or suffix mode (resolved via `culture_server_yaml`).
+
+Both **report**; they do not flag or fix drift (that judgment is steward's lane).
+
 **Backend:** guildmaster is a CLI *plus* an agent like steward, so the natural
 fit is `backend: claude` with this `CLAUDE.md` as the runtime prompt and a
 `culture.yaml` declaring the `guildmaster` agent suffix (steward's is

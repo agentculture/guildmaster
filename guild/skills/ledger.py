@@ -220,6 +220,42 @@ def parse_consumers(ledger_text: str, skill: str) -> list[str]:
     return list(seen)
 
 
+def supplier_skills(ledger_text: str) -> list[str]:
+    """Return the order-preserved, de-duplicated list of skills the supplier
+    ledger tracks.
+
+    A skill is "tracked" when it appears as a backtick-quoted token in the Skill
+    column of any supplier table (a GFM table with both a "Skill" and a
+    "Downstream" column).  An empty list means there is no supplier ledger yet
+    (e.g. pre-cutover, when ``docs/skill-sources.md`` is still a consumer-side
+    "Upstream / Notes" view rather than a supplier "Downstream" view).
+    """
+    seen: dict[str, None] = {}
+    for table in _parse_tables(ledger_text):
+        skill_col = table["skill_col"]
+        for row in table["rows"]:
+            cells = row["cells"]
+            if skill_col >= len(cells):
+                continue
+            for name in _backtick_names(cells[skill_col]):
+                if name not in seen:
+                    seen[name] = None
+    return list(seen)
+
+
+def consumer_map(ledger_text: str) -> dict[str, list[str]]:
+    """Return ``{skill: [consumer, ...]}`` for every skill in the supplier ledger.
+
+    Each skill maps to its de-duplicated, order-preserved consumer list (same
+    semantics as :func:`parse_consumers`).  Skills tracked with no consumers map
+    to an empty list, so the keys of the result equal :func:`supplier_skills`.
+    """
+    result: dict[str, list[str]] = {}
+    for skill in supplier_skills(ledger_text):
+        result[skill] = parse_consumers(ledger_text, skill)
+    return result
+
+
 def register_consumer(
     ledger_text: str,
     agent: str,

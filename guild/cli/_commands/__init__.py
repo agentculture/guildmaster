@@ -25,6 +25,14 @@ VERBS: dict[str, str] = {
         "Onboard a new sibling: the full canonical kit + identity-setup section "
         "+ ledger registration + verification record. Dry-run by default."
     ),
+    "overview": (
+        "Skills-supplier overview — the canonical skill set + versions, the "
+        "ledger view, and drift signals. Read-only; --scope all / self."
+    ),
+    "show": (
+        "Show one agent's full config in a read-only view — its prompt file, "
+        "culture.yaml, and skills index. Path or registered suffix."
+    ),
 }
 
 __all__ = ["VERBS"]

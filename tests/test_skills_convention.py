@@ -40,6 +40,8 @@ def test_canonical_set_is_vendored() -> None:
         "sonarclaude",
         "doc-test-alignment",
         "pypi-maintainer",
+        # agent-config: vendored from steward to back `guild show` (issue #12).
+        "agent-config",
     }
     present = {d.name for d in SKILLS_DIR.iterdir() if d.is_dir()}
     assert expected <= present, f"missing canonical skills: {expected - present}"

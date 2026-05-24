@@ -76,6 +76,32 @@ verification). After: **one command** propagates a skill set, or onboards a
 sibling end-to-end. Going live is gated on the staged steward→guildmaster
 cutover — see [`docs/cutover.md`](docs/cutover.md).
 
+### Inventory verbs — `overview` & `show`
+
+guildmaster owns the mesh's **inventory** surfaces (the read-only "what kit +
+config does an agent have?" view) per
+[issue #12](https://github.com/agentculture/guildmaster/issues/12). Both are
+read-only — no `--apply`, no mutation, no drift verdict (judgment stays with
+`steward overview` / `steward doctor`).
+
+| Verb | What it does |
+|------|--------------|
+| `guild overview [--scope all\|self <agent>]` | The supplier view: the canonical skill set + versions/origins, the `docs/skill-sources.md` ledger, and drift signals (uncovered skills, per-agent kit gaps). Feeds `teach` / `onboard`. |
+| `guild show <path-or-suffix>` | One agent's full config in one view — its detected prompt file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), its parallel `culture.yaml`, and its `.claude/skills` index. |
+
+```bash
+uv run guild overview                       # whole ledger + canonical set
+uv run guild overview --scope self daria    # one agent's kit + gaps
+uv run guild show ../culture                 # config by path
+uv run guild show daria                      # config by registered suffix
+```
+
+`guild show` resolves a registered suffix via the Culture server manifest
+(`culture_server_yaml` in `.claude/skills.local.yaml`); pass an explicit
+directory path to skip the lookup. Pre-cutover the ledger is still a
+consumer-side view with no downstream column, so `overview`'s drift signals
+activate only after the steward→guildmaster cutover — the verb says so plainly.
+
 ## Develop
 
 ```bash
