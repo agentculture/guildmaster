@@ -74,10 +74,17 @@ def post_issue(root: Path, repo: str, title: str, body: str) -> None:
             [_BASH, str(script), "--repo", repo, "--title", title, "--body-file", tmp.name],
             capture_output=True,
             text=True,
+            # Run from the repo root so post-issue.sh / agtag resolve culture.yaml
+            # (the signing nick) and other relative paths consistently, no matter
+            # which directory `guild` was invoked from.
+            cwd=str(root),
         )
         if proc.returncode != 0:
+            # post-issue.sh exits 2 for environment/usage problems (e.g. agtag
+            # missing) — surface that as an env error, not a user error.
+            code = EXIT_ENV_ERROR if proc.returncode == 2 else EXIT_USER_ERROR
             raise GuildError(
-                code=EXIT_USER_ERROR,
+                code=code,
                 message=f"posting to {repo} failed: {proc.stderr.strip() or proc.stdout.strip()}",
                 remediation="check repo access + agtag auth, then retry",
             )

@@ -105,6 +105,17 @@ def test_onboard_apply_posts_writes_ledger_and_pins(tmp_path, monkeypatch, capsy
     assert ver["agent"] == "agentculture/newsib"
 
 
+def test_onboard_backend_acp_uses_agents_md(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(_broadcast, "post_issue", lambda *a, **k: None)
+    rc = main(["onboard", "--agent", "newsib", "--backend", "acp", "--json"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["backend"] == "acp"
+    # acp sibling must be told to create AGENTS.md, not CLAUDE.md.
+    assert "AGENTS.md" in out["issue"]["body"]
+
+
 def test_onboard_apply_ledger_idempotent(tmp_path, monkeypatch):
     root = _seed(tmp_path)
     monkeypatch.chdir(root)

@@ -17,6 +17,14 @@ VERBS: dict[str, str] = {
     "explain": (
         "Explain one topic in depth — a vendored skill (prints its SKILL.md) " "or a CLI verb."
     ),
+    "teach": (
+        "Propagate a set of skills to a set of mesh agents — one agent-major "
+        "issue per target. Dry-run by default; --apply files."
+    ),
+    "onboard": (
+        "Onboard a new sibling: the full canonical kit + identity-setup section "
+        "+ ledger registration + verification record. Dry-run by default."
+    ),
 }
 
 __all__ = ["VERBS"]

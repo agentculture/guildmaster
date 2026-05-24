@@ -55,6 +55,13 @@ def register(sub: argparse._SubParsersAction) -> None:
         help="Default org for a bare --agent name (default: agentculture).",
     )
     parser.add_argument(
+        "--backend",
+        choices=["claude", "acp"],
+        default="claude",
+        help="The new sibling's backend — picks the prompt file in the identity "
+        "section (claude -> CLAUDE.md, acp -> AGENTS.md). Default: claude.",
+    )
+    parser.add_argument(
         "--apply",
         action="store_true",
         help="File the issue + write ledger + record pins (default: dry-run).",
@@ -75,7 +82,9 @@ def _verification_record(agent: str, skills: list[str]) -> dict:
     }
 
 
-def _onboard_body(agent: str, skills: list[str], *, root: Path, ledger_text: str, origins) -> str:
+def _onboard_body(
+    agent: str, skills: list[str], *, root: Path, ledger_text: str, origins, backend: str
+) -> str:
     welcome = (
         f"## Welcome, `{agent}`\n\n"
         "You're being onboarded into the AgentCulture mesh. Vendor the full "
@@ -85,7 +94,7 @@ def _onboard_body(agent: str, skills: list[str], *, root: Path, ledger_text: str
     # Same rendering engine teach uses — a brand-new sibling consumes nothing
     # yet, so every section renders in NEW framing.
     kit = render_issue(agent, skills, root=root, ledger_text=ledger_text, origins=origins)
-    identity = identity_section(agent.rsplit("/", 1)[-1], backend="claude")
+    identity = identity_section(agent.rsplit("/", 1)[-1], backend=backend)
     return f"{welcome}\n{kit}\n\n{identity}".rstrip() + "\n"
 
 
@@ -97,7 +106,9 @@ def _handle(args: argparse.Namespace) -> int:
     origins = _broadcast.origins_for(skills)
     ledger_text = _broadcast.read_ledger(root)
 
-    body = _onboard_body(agent, skills, root=root, ledger_text=ledger_text, origins=origins)
+    body = _onboard_body(
+        agent, skills, root=root, ledger_text=ledger_text, origins=origins, backend=args.backend
+    )
     title = f"Onboarding {agent}: vendor the guildmaster skill kit ({len(skills)} skills)"
 
     new_ledger = _ledger.register_consumer(ledger_text, agent_bare, skills)
@@ -123,6 +134,7 @@ def _handle(args: argparse.Namespace) -> int:
         result = {
             "applied": True,
             "agent": agent,
+            "backend": args.backend,
             "posted": agent,
             "ledger_written": ledger_written,
             "verification_path": str(ver_path.relative_to(root)),
@@ -132,6 +144,7 @@ def _handle(args: argparse.Namespace) -> int:
             "applied": False,
             "dry_run": True,
             "agent": agent,
+            "backend": args.backend,
             "issue": {"repo": agent, "title": title, "body": body},
             "ledger_diff": ledger_diff,
             "verification": verification,
