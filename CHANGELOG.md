@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-05-24
+
+### Added
+
+- **`guild overview --scope mesh`** — a live filesystem survey of the whole
+  workspace, the answer to "what skills does every agent have, and what's
+  missing or stale, and where" without waiting for the cutover. Discovers every
+  agent (`<workspace>/*/culture.yaml`, via the new `discover_agents` helper) and
+  reports, per agent, each canonical skill as **current** / **stale** (the
+  agent's copy differs from guildmaster's by content fingerprint —
+  `skill_fingerprint`) / **missing**, plus any non-canonical "extra" skills.
+  Markdown + `--json`; `--workspace-root DIR` overrides the surveyed root
+  (default: the parent of this repo). Read-only, inventory only — no
+  dependency/relationship graph (that stays steward's lane). The existing
+  ledger-based `--scope all` / `--scope self` are unchanged.
+
+### Changed
+
+### Fixed
+
 ## [0.4.1] - 2026-05-24
 
 ### Added

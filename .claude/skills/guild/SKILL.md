@@ -58,6 +58,13 @@ relationship graph (issue #12: inventory → guildmaster; judgment → steward):
 "Downstream" column, so the supplier ledger is empty and drift is inactive; the
 verb reports the canonical set and says so plainly (see `docs/cutover.md`).
 
+**`--scope mesh`** is the ledger-free alternative: it surveys every agent in the
+workspace (`<workspace>/*/culture.yaml`) live off the filesystem and reports, per
+agent, each canonical skill as **current** / **stale** (the agent's copy differs
+from guildmaster's by content fingerprint) / **missing**, plus any non-canonical
+"extra" skills. Use it to answer "what's missing or stale, and where" *today*,
+without waiting for the cutover. Still skills-scoped — no relationship graph.
+
 ## When to use
 
 - An operator asks "what skills do we supply" / "what's the canonical set".
@@ -76,9 +83,12 @@ One script. Pick the scope (or just run `guild overview`, which this wraps):
 # One agent — that agent's kit + gaps (first positional → --scope self)
 .claude/skills/guild/scripts/overview.sh daria
 
+# Mesh survey — every agent's skills + missing/stale, live off the filesystem
+.claude/skills/guild/scripts/overview.sh --scope mesh
+
 # Machine-readable evidence for precise reasoning
 .claude/skills/guild/scripts/overview.sh --json
-.claude/skills/guild/scripts/overview.sh daria --json
+.claude/skills/guild/scripts/overview.sh --scope mesh --json
 ```
 
 The script prints the CLI's markdown by default: the canonical-skill table, a

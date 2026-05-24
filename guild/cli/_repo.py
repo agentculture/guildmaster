@@ -8,6 +8,7 @@ offline — no network, no shelling out — so the agent-affordance verbs
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -114,3 +115,97 @@ def iter_skills(root: Path) -> list[Skill]:
         description = " ".join(str(fm.get("description", "")).split())
         found.append(Skill(name=name, path=child, description=description))
     return found
+
+
+@dataclass
+class DiscoveredAgent:
+    """One Culture agent found while surveying the workspace: its ``suffix``,
+    declared ``backend``, and the repo directory it lives in."""
+
+    suffix: str
+    backend: str
+    repo_path: Path
+
+    @property
+    def repo_name(self) -> str:
+        return self.repo_path.name
+
+
+def _agent_entries(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Agent dicts inside a parsed ``culture.yaml`` — both shapes the mesh uses.
+
+    Either an ``agents:`` list (multi-agent repos like culture/daria) or a flat
+    root-level ``suffix:``/``backend:`` (single-agent repos). Mirrors steward's
+    ``_corpus._extract_agent_entries`` (cite-don't-import).
+    """
+    if not isinstance(data, dict):
+        return []
+    if "suffix" in data and "agents" not in data:
+        return [data]
+    agents = data.get("agents")
+    return [a for a in agents if isinstance(a, dict)] if isinstance(agents, list) else []
+
+
+def discover_agents(
+    workspace_root: Path, *, skip_repos: set[str] | None = None
+) -> list[DiscoveredAgent]:
+    """Discover Culture agents declared in sibling repos under *workspace_root*.
+
+    Globs ``<workspace_root>/*/culture.yaml`` (one level deep — sibling repos,
+    not nested manifests) and returns one :class:`DiscoveredAgent` per agent
+    entry, sorted by repo name then suffix. Mirrors steward's
+    ``_corpus.discover_agents`` (cite-don't-import), trimmed to the inventory
+    essentials — no baseline synthesis, scoring, or relationship graph (that
+    judgment is steward's lane). Repos whose directory name is in *skip_repos*
+    are excluded; unreadable/malformed manifests are skipped (best-effort,
+    read-only).
+    """
+    skip = skip_repos or set()
+    agents: list[DiscoveredAgent] = []
+    for manifest in sorted(workspace_root.glob("*/culture.yaml")):
+        repo_path = manifest.parent
+        if repo_path.name in skip:
+            continue
+        try:
+            data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError):
+            continue
+        for entry in _agent_entries(data if isinstance(data, dict) else {}):
+            suffix = entry.get("suffix")
+            if not suffix:
+                continue
+            backend_raw = entry.get("backend")
+            backend = "" if backend_raw is None else str(backend_raw)
+            agents.append(DiscoveredAgent(suffix=str(suffix), backend=backend, repo_path=repo_path))
+    return sorted(agents, key=lambda a: (a.repo_name, a.suffix))
+
+
+def skill_fingerprint(skill_dir: Path) -> str:
+    """A deterministic content digest of a skill directory.
+
+    Folds every file under *skill_dir* (sorted by relative path; each file's
+    relative path + bytes hashed into one SHA-256) so two copies of a skill
+    compare equal iff their tracked content matches — the basis for the
+    current/stale signal in ``guild overview --scope mesh``. ``__pycache__`` and
+    ``*.pyc`` are skipped (build artifacts, not skill content). Returns a short
+    12-char hex digest, or ``""`` when the directory is absent or empty.
+    """
+    if not skill_dir.is_dir():
+        return ""
+    files = sorted(
+        p
+        for p in skill_dir.rglob("*")
+        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
+    )
+    if not files:
+        return ""
+    digest = hashlib.sha256()
+    for path in files:
+        digest.update(path.relative_to(skill_dir).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        try:
+            digest.update(path.read_bytes())
+        except OSError:
+            digest.update(b"<unreadable>")
+        digest.update(b"\0")
+    return digest.hexdigest()[:12]
