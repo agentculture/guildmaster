@@ -219,3 +219,6 @@ __marimo__/
 
 # AgentCulture: per-machine skills config (the .example is committed)
 .claude/skills.local.yaml
+
+# devague working state (not committed by default)
+.devague/reviews/
