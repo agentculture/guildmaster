@@ -38,9 +38,10 @@ from guild.cli._repo import find_git_root, iter_skills, load_culture_yaml
 # so it must run under bash (not /bin/sh) and we never invoke a partial name.
 _BASH = shutil.which("bash") or "/bin/bash"
 
-_SKILL_REL = Path(".claude") / "skills" / "agent-config"
-_LOCAL_CFG = Path(".claude") / "skills.local.yaml"
-_LOCAL_CFG_EXAMPLE = Path(".claude") / "skills.local.yaml.example"
+_DOT_CLAUDE = ".claude"
+_SKILL_REL = Path(_DOT_CLAUDE) / "skills" / "agent-config"
+_LOCAL_CFG = Path(_DOT_CLAUDE) / "skills.local.yaml"
+_LOCAL_CFG_EXAMPLE = Path(_DOT_CLAUDE) / "skills.local.yaml.example"
 # Fallback prompt filenames when the backend-fingerprint registry is absent.
 _PROMPT_FALLBACK = ("CLAUDE.md", "AGENTS.md", "GEMINI.md")
 
@@ -83,30 +84,38 @@ def _resolve_target_dir(target: str, repo_root: Path | None) -> Path:
     """Resolve *target* to an existing directory.
 
     Path mode: *target* is a directory (inspected as-is — cross-repo inventory
-    such as ``guild show ../culture`` is the point). Suffix mode: resolve a
-    registered agent suffix via the Culture server manifest named by
-    ``culture_server_yaml`` in ``.claude/skills.local.yaml``.
+    such as ``guild show ../culture`` is the point). Otherwise, suffix mode
+    resolves a registered agent suffix via the Culture server manifest.
     """
     path = Path(target).expanduser()
     if path.is_dir():
         return path
+    return _resolve_suffix(target, repo_root)
 
-    cfg = _read_local_config(repo_root)
-    server_yaml = cfg.get("culture_server_yaml")
+
+def _manifest_path(target: str, repo_root: Path | None) -> Path:
+    """The Culture server manifest named by ``culture_server_yaml`` in
+    ``.claude/skills.local.yaml``. Raises an env error if unset or absent."""
+    server_yaml = _read_local_config(repo_root).get("culture_server_yaml")
     if not server_yaml:
         raise GuildError(
             code=EXIT_ENV_ERROR,
             message=f"{target!r} is not a directory and no culture_server_yaml is configured",
-            remediation="pass a directory path, or set culture_server_yaml in "
-            ".claude/skills.local.yaml",
+            remediation=f"pass a directory path, or set culture_server_yaml in {_LOCAL_CFG}",
         )
     manifest = Path(str(server_yaml)).expanduser()
     if not manifest.is_file():
         raise GuildError(
             code=EXIT_ENV_ERROR,
             message=f"no server manifest at {manifest}",
-            remediation="set culture_server_yaml in .claude/skills.local.yaml, or pass a path",
+            remediation=f"set culture_server_yaml in {_LOCAL_CFG}, or pass a directory path",
         )
+    return manifest
+
+
+def _resolve_suffix(target: str, repo_root: Path | None) -> Path:
+    """Resolve a registered agent *suffix* to its checkout directory."""
+    manifest = _manifest_path(target, repo_root)
     data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
     entry = (data.get("agents") or {}).get(target)
     if entry is None:
