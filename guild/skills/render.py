@@ -54,8 +54,7 @@ def render_section(
     if block:
         lines += [block, ""]
     lines += [
-        f"Cite: `../guildmaster/{SKILLS_DIR}/{skill}/` "
-        f"(remote: <{_CITE_REMOTE}/{skill}>)",
+        f"Cite: `../guildmaster/{SKILLS_DIR}/{skill}/` " f"(remote: <{_CITE_REMOTE}/{skill}>)",
         "",
         f"`{skill}/scripts/` ({len(scripts)} files):",
         "",
@@ -102,21 +101,25 @@ def render_issue(
         "",
     ]
 
+    # The ledger stores *bare* consumer repo names; the agent may arrive as
+    # ``owner/repo``. Compare on the bare repo name so framing is correct
+    # regardless of how the target was spelled.
+    agent_bare = agent.rsplit("/", 1)[-1]
+
     sections = []
     for skill in skills:
         consumers = _ledger.parse_consumers(ledger_text, skill) if ledger_text else []
+        consumers_bare = {c.rsplit("/", 1)[-1] for c in consumers}
         scripts = _sources.script_list(root / SKILLS_DIR / skill)
         changelog = ""
         if changelog_text:
-            changelog = _sources.changelog_excerpt(
-                changelog_text, skill=skill, since=since
-            )
+            changelog = _sources.changelog_excerpt(changelog_text, skill=skill, since=since)
         sections.append(
             render_section(
                 skill,
                 scripts=scripts,
                 changelog=changelog,
-                new=agent not in consumers,
+                new=agent_bare not in consumers_bare,
                 origin=origins.get(skill),
             )
         )

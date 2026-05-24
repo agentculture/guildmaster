@@ -37,11 +37,7 @@ def script_list(skill_dir: "str | Path") -> list[str]:
     scripts_path = Path(skill_dir) / "scripts"
     if not scripts_path.is_dir():
         return []
-    names = [
-        entry.name
-        for entry in scripts_path.iterdir()
-        if entry.is_file()
-    ]
+    names = [entry.name for entry in scripts_path.iterdir() if entry.is_file()]
     return sorted(names)
 
 

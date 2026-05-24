@@ -33,6 +33,7 @@ def _seed_root(tmp_path: Path) -> Path:
 
 # --- render_section (pure) ---
 
+
 def test_section_new_vs_resync_wording() -> None:
     new = render_section("cicd", scripts=["a.sh"], new=True)
     resync = render_section("cicd", scripts=["a.sh"], new=False)
@@ -55,6 +56,7 @@ def test_section_lists_scripts_with_count() -> None:
 
 
 # --- render_issue (integration) ---
+
 
 def test_issue_is_one_body_with_a_section_per_skill(tmp_path: Path) -> None:
     root = _seed_root(tmp_path)
@@ -79,7 +81,10 @@ def test_issue_origin_block_for_inbound_trio(tmp_path: Path) -> None:
     root = _seed_root(tmp_path)
     (root / ".claude" / "skills" / "think" / "scripts").mkdir(parents=True)
     body = render_issue(
-        "newsib", ["think"], root=root, ledger_text=_LEDGER,
+        "newsib",
+        ["think"],
+        root=root,
+        ledger_text=_LEDGER,
         origins={"think": "agentculture/devague"},
     )
     assert "agentculture/devague" in body

@@ -25,7 +25,6 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -44,7 +43,7 @@ def _parse_tables(ledger_text: str) -> list[dict]:
             "rows": [
                 {
                     "line_no": int,          # 0-based index into *lines*
-                    "cells":   list[str],    # stripped cell values (not including leading/trailing |)
+                    "cells":   list[str],    # stripped cell values (no edge pipes)
                 },
                 ...
             ],
@@ -343,8 +342,6 @@ def _replace_cell_in_line(line: str, col_index: int, new_cell_value: str) -> str
         original_segment = parts[data_index]
         leading_spaces = len(original_segment) - len(original_segment.lstrip())
         trailing_spaces = len(original_segment) - len(original_segment.rstrip())
-        parts[data_index] = (
-            " " * leading_spaces + new_cell_value + " " * trailing_spaces
-        )
+        parts[data_index] = " " * leading_spaces + new_cell_value + " " * trailing_spaces
 
     return "|".join(parts) + trailing

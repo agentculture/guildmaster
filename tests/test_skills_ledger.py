@@ -5,8 +5,6 @@ Fixture ledger is defined inline; tests do NOT touch the live docs/skill-sources
 
 from __future__ import annotations
 
-import pytest
-
 from guild.skills.ledger import parse_consumers, register_consumer
 
 # ---------------------------------------------------------------------------
