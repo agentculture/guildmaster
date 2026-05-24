@@ -85,6 +85,27 @@ CHANGELOG.md                # Keep-a-Changelog
 to dry-run; `--apply` commits** — agents call CLIs in loops, so safe-by-default
 is mandatory.
 
+**Supplier verbs — `teach` & `onboard` (the broadcast surface).** As the mesh's
+skills supplier, guildmaster propagates skills through two write verbs:
+
+- `guild teach --skill <name> … --to <agent> …` — teach a **set** of skills to a
+  **set** of agents.
+- `guild onboard --agent <owner/repo>` — onboard a **new** sibling: the full
+  canonical kit + an identity-setup section + ledger registration + a
+  verification record.
+
+They are **agent-major**: one issue per target agent, bundling a per-skill
+*section* for each skill that agent receives — *not* one issue per skill.
+New-vs-resync framing is auto-detected per `(skill, agent)` from
+`docs/skill-sources.md`; skills must be selected explicitly (`--skill` /
+`--all`, no implicit default). `teach` is the single render+post engine and
+`onboard` composes it (`onboard X` ≡ `teach <all-canonical> --new --to X` +
+ledger + identity + verification). **These supersede a separate
+`announce-skill-update` verb** ([issue #10](https://github.com/agentculture/guildmaster/issues/10)
+asked for one; guildmaster fulfills the broadcast *role* via these two instead).
+Going live is gated on the steward→guildmaster cutover (`docs/cutover.md`) — no
+two live broadcasters.
+
 **Backend:** guildmaster is a CLI *plus* an agent like steward, so the natural
 fit is `backend: claude` with this `CLAUDE.md` as the runtime prompt and a
 `culture.yaml` declaring the `guildmaster` agent suffix (steward's is
