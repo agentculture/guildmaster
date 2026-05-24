@@ -8,6 +8,7 @@ script stays runnable.
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -80,7 +81,8 @@ def test_show_no_skills(tmp_path, monkeypatch, capsys):
 
 def test_show_suffix_mode_resolves_via_manifest(tmp_path, monkeypatch, capsys):
     repo = _seed_repo(tmp_path)
-    target = _seed_target(repo, "daria", prompt="AGENTS.md", culture=True, skills=False)
+    # Dir name differs from the suffix so cwd has no `./daria` — forces suffix mode.
+    target = _seed_target(repo, "regagent", prompt="AGENTS.md", culture=True, skills=False)
     # A Culture server manifest mapping the suffix → its directory.
     manifest = repo / "server.yaml"
     manifest.write_text(f"agents:\n  daria:\n    directory: {target}\n")
@@ -121,3 +123,43 @@ def test_show_detects_each_backend_prompt_file(tmp_path, monkeypatch, capsys, pr
     rc = main(["show", "agent"])
     assert rc == 0
     assert prompt_file in capsys.readouterr().out
+
+
+def test_show_json_path_mode_structured(tmp_path, monkeypatch, capsys):
+    repo = _seed_repo(tmp_path)
+    _seed_target(repo, "agentx", prompt="AGENTS.md", culture=True, skills=True)
+    monkeypatch.chdir(repo)
+    rc = main(["show", "agentx", "--json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["target"] == "agentx"
+    assert payload["prompt_file"] == "AGENTS.md"
+    assert "agentx prompt" in payload["prompt"]
+    assert payload["culture_yaml"]["agents"][0]["backend"] == "acp"
+    assert [s["name"] for s in payload["skills"]] == ["demo"]
+
+
+def test_show_json_suffix_mode(tmp_path, monkeypatch, capsys):
+    repo = _seed_repo(tmp_path)
+    # Dir name differs from the suffix so cwd has no `./daria` — forces suffix mode.
+    target = _seed_target(repo, "regagent", prompt="AGENTS.md", culture=True, skills=False)
+    manifest = repo / "server.yaml"
+    manifest.write_text(f"agents:\n  daria:\n    directory: {target}\n")
+    (repo / ".claude" / "skills.local.yaml").write_text(f"culture_server_yaml: {manifest}\n")
+    monkeypatch.chdir(repo)
+    rc = main(["show", "daria", "--json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["dir"] == str(target)
+    assert payload["culture_yaml"]["agents"][0]["suffix"] == "daria"
+
+
+def test_show_json_missing_culture_yaml_is_null(tmp_path, monkeypatch, capsys):
+    repo = _seed_repo(tmp_path)
+    _seed_target(repo, "noconf", prompt="CLAUDE.md", culture=False, skills=False)
+    monkeypatch.chdir(repo)
+    rc = main(["show", "noconf", "--json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["culture_yaml"] is None
+    assert payload["skills"] == []

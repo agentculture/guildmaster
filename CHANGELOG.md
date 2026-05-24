@@ -23,9 +23,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   view ([#12](https://github.com/agentculture/guildmaster/issues/12)): the
   detected system-prompt file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), the
   parallel `culture.yaml`, and the `.claude/skills` index. Path mode or suffix
-  mode (resolved via `culture_server_yaml`). Thin wrapper that shells out to the
-  vendored `agent-config` skill's `show.sh`, mirroring `steward show`; inventory
-  only — it reports, it does not judge drift.
+  mode (resolved via `culture_server_yaml`). Target resolution happens once in
+  Python; the human view shells out to the vendored `agent-config` `show.sh`
+  (mirroring `steward show`), while `--json` emits a structured object (prompt
+  file + contents, parsed `culture.yaml`, skills index) built natively. Failure
+  output stays the structured `error:` / `hint:` shape. Inventory only — it
+  reports, it does not judge drift.
 - **`agent-config` skill** vendored from steward (cite-don't-import) to back
   `guild show`: `scripts/show.sh` + `data/backend-fingerprints.yaml` verbatim;
   SKILL.md reframed for guildmaster's inventory role + `type: command`. Recorded

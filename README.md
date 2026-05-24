@@ -94,6 +94,7 @@ uv run guild overview                       # whole ledger + canonical set
 uv run guild overview --scope self daria    # one agent's kit + gaps
 uv run guild show ../culture                 # config by path
 uv run guild show daria                      # config by registered suffix
+uv run guild show ../culture --json          # structured config object
 ```
 
 `guild show` resolves a registered suffix via the Culture server manifest
