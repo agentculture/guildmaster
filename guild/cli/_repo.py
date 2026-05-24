@@ -153,6 +153,29 @@ def _agent_entries(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [a for a in agents if isinstance(a, dict)] if isinstance(agents, list) else []
 
 
+def _agents_in_manifest(manifest: Path) -> list[DiscoveredAgent]:
+    """Parse one ``culture.yaml`` into its declared agents (empty on any error).
+
+    Unreadable / non-UTF-8 / malformed manifests yield ``[]`` rather than
+    raising — the survey reads arbitrary external repos, so one bad manifest must
+    not abort discovery.
+    """
+    try:
+        data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, yaml.YAMLError):
+        return []
+    repo_path = manifest.parent
+    found: list[DiscoveredAgent] = []
+    for entry in _agent_entries(data if isinstance(data, dict) else {}):
+        suffix = entry.get("suffix")
+        if not suffix:
+            continue
+        backend_raw = entry.get("backend")
+        backend = "" if backend_raw is None else str(backend_raw)
+        found.append(DiscoveredAgent(suffix=str(suffix), backend=backend, repo_path=repo_path))
+    return found
+
+
 def discover_agents(
     workspace_root: Path, *, skip_repos: set[str] | None = None
 ) -> list[DiscoveredAgent]:
@@ -170,20 +193,9 @@ def discover_agents(
     skip = skip_repos or set()
     agents: list[DiscoveredAgent] = []
     for manifest in sorted(workspace_root.glob("*/culture.yaml")):
-        repo_path = manifest.parent
-        if repo_path.name in skip:
+        if manifest.parent.name in skip:
             continue
-        try:
-            data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, yaml.YAMLError):
-            continue
-        for entry in _agent_entries(data if isinstance(data, dict) else {}):
-            suffix = entry.get("suffix")
-            if not suffix:
-                continue
-            backend_raw = entry.get("backend")
-            backend = "" if backend_raw is None else str(backend_raw)
-            agents.append(DiscoveredAgent(suffix=str(suffix), backend=backend, repo_path=repo_path))
+        agents.extend(_agents_in_manifest(manifest))
     return sorted(agents, key=lambda a: (a.repo_name, a.suffix))
 
 
