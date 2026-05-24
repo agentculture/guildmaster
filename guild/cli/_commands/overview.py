@@ -13,23 +13,33 @@ surfaces three things, **skills-scoped only** — it does not reproduce
   canonical skills the ledger doesn't track yet. These feed ``teach`` /
   ``onboard``.
 
+``--scope mesh`` is the live alternative to the ledger: instead of reading
+``docs/skill-sources.md``, it surveys every agent in the workspace
+(``<workspace>/*/culture.yaml``) straight off the filesystem and reports, per
+agent, which canonical skills are present / **stale** (the agent's copy differs
+from guildmaster's canonical copy by content fingerprint) / **missing**. This
+answers "what's missing or stale, and where" without waiting for the cutover —
+still skills-scoped, still no dependency/relationship graph.
+
 Read-only: no ``--apply``, no mutation, no network/LLM call. Pre-cutover the
 guildmaster ledger is still a consumer-side view with no "Downstream" column, so
-the supplier ledger is empty; the verb says so plainly and still reports the
-canonical set (see ``docs/cutover.md``).
+the supplier ledger is empty; ``--scope all``/``self`` say so plainly and still
+report the canonical set (see ``docs/cutover.md``), while ``--scope mesh`` does
+not depend on the ledger at all.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from guild import __version__
 from guild.cli._commands import _broadcast
 from guild.cli._errors import EXIT_USER_ERROR, GuildError
 from guild.cli._output import emit_result
-from guild.cli._repo import repo_root
-from guild.skills import INBOUND_ORIGINS
+from guild.cli._repo import discover_agents, iter_skills, repo_root, skill_fingerprint
+from guild.skills import INBOUND_ORIGINS, SELF_SKILLS
 from guild.skills import ledger as _ledger
 
 LEDGER_PATH = "docs/skill-sources.md"
@@ -38,24 +48,37 @@ LEDGER_PATH = "docs/skill-sources.md"
 def register(sub: argparse._SubParsersAction) -> None:
     parser = sub.add_parser(
         "overview",
-        help="Skills-supplier overview: canonical set + ledger + drift (read-only).",
+        help="Skills-supplier overview: canonical set + ledger + drift, or a live mesh survey.",
         description=(
             "Report guildmaster's canonical skill set + versions, the "
-            "upstream/downstream ledger, and drift signals. Skills-scoped and "
-            "read-only — no --apply, no mutation. For one agent's full config "
-            "(prompt file + culture.yaml + skills), use `guild show <agent>`."
+            "upstream/downstream ledger, and drift signals (--scope all/self, "
+            "from the ledger); or survey every agent's vendored skills live from "
+            "the filesystem and flag what's missing or stale per agent (--scope "
+            "mesh). Skills-scoped and read-only — no --apply, no mutation, no "
+            "dependency/relationship graph (that is steward's lane). For one "
+            "agent's full config, use `guild show <agent>`."
         ),
     )
     parser.add_argument(
         "--scope",
-        choices=("all", "self"),
+        choices=("all", "self", "mesh"),
         default="all",
-        help="all = whole ledger across the mesh (default); self = one agent's kit + drift.",
+        help=(
+            "all = whole ledger across the mesh (default); self = one agent's "
+            "kit + drift (from the ledger); mesh = live filesystem survey of "
+            "every agent's skills + missing/stale signals."
+        ),
     )
     parser.add_argument(
         "agent",
         nargs="?",
-        help="Agent name — required with --scope self, ignored with --scope all.",
+        help="Agent name — required with --scope self; ignored with --scope all/mesh.",
+    )
+    parser.add_argument(
+        "--workspace-root",
+        type=Path,
+        default=None,
+        help="Workspace dir to survey for --scope mesh (default: the parent of this repo).",
     )
     parser.add_argument(
         "--json",
@@ -143,6 +166,57 @@ def _build_self(root, agent: str) -> dict:
         "registered": agent_bare in all_consumers_bare,
         "kit": kit,
         "gaps": gaps,
+    }
+
+
+def _build_mesh(root, workspace_root) -> dict:
+    """Live filesystem survey of every agent's vendored skills + drift.
+
+    Canonical reference is guildmaster's own supplied set (its ``.claude/skills``
+    minus ``SELF_SKILLS``); an agent's copy is **stale** when its content
+    fingerprint differs from guildmaster's, **missing** when absent. Inventory
+    only — no dependency/relationship graph (that judgment is steward's lane).
+    """
+    canonical = [s for s in iter_skills(root) if s.name not in SELF_SKILLS]
+    canonical_fp = {s.name: skill_fingerprint(s.path) for s in canonical}
+    canonical_names = [s.name for s in canonical]
+
+    agents_view: list[dict] = []
+    for agent in discover_agents(workspace_root):
+        by_name = {s.name: s for s in iter_skills(agent.repo_path)}
+        per_skill: list[dict] = []
+        missing: list[str] = []
+        stale: list[str] = []
+        for name in canonical_names:
+            skill = by_name.get(name)
+            if skill is None:
+                missing.append(name)
+                per_skill.append({"skill": name, "status": "missing", "fingerprint": ""})
+                continue
+            fingerprint = skill_fingerprint(skill.path)
+            status = "current" if fingerprint == canonical_fp[name] else "stale"
+            if status == "stale":
+                stale.append(name)
+            per_skill.append({"skill": name, "status": status, "fingerprint": fingerprint})
+        agents_view.append(
+            {
+                "suffix": agent.suffix,
+                "backend": agent.backend,
+                "repo": agent.repo_name,
+                "skills": sorted(by_name),
+                "missing": missing,
+                "stale": stale,
+                "extra": sorted(n for n in by_name if n not in canonical_fp),
+                "per_skill": per_skill,
+            }
+        )
+
+    return {
+        "scope": "mesh",
+        "version": __version__,
+        "workspace_root": str(workspace_root),
+        "canonical_skills": [{"name": n, "fingerprint": canonical_fp[n]} for n in canonical_names],
+        "agents": agents_view,
     }
 
 
@@ -247,8 +321,73 @@ def _render_self(data: dict) -> str:
     return "\n".join(lines)
 
 
+def _count_or_dash(names) -> str:
+    """The count of *names*, or an em dash when there are none."""
+    return str(len(names)) if names else "—"
+
+
+def _render_mesh(data: dict) -> str:
+    agents = data["agents"]
+    canonical = data["canonical_skills"]
+    lines = [
+        "# guild overview — mesh skill inventory (scope: mesh)",
+        "",
+        f"guild {data['version']} · workspace: `{data['workspace_root']}` · "
+        f"{len(agents)} agent(s) · canonical set: {len(canonical)} skill(s)",
+        "",
+    ]
+    if not agents:
+        lines += [
+            "No agents found — no `*/culture.yaml` under the workspace root. Pass "
+            "`--workspace-root DIR` to point at the directory holding the sibling repos.",
+        ]
+        return "\n".join(lines)
+
+    lines += [
+        "## Agents",
+        "",
+        "| Agent | Backend | Repo | Skills | Missing | Stale |",
+        "|-------|---------|------|--------|---------|-------|",
+    ]
+    for a in agents:
+        lines.append(
+            f"| `{a['suffix']}` | {a['backend'] or '—'} | `{a['repo']}` | "
+            f"{len(a['skills'])} | {_count_or_dash(a['missing'])} | "
+            f"{_count_or_dash(a['stale'])} |"
+        )
+
+    drifting = [a for a in agents if a["missing"] or a["stale"]]
+    lines += ["", "## Missing & stale detail", ""]
+    if not drifting:
+        lines.append("Every agent's vendored copies match guildmaster's canonical set.")
+    else:
+        for a in drifting:
+            parts = []
+            if a["stale"]:
+                parts.append("stale " + _names_or(a["stale"]))
+            if a["missing"]:
+                parts.append("missing " + _names_or(a["missing"]))
+            lines.append(f"- `{a['suffix']}` (`{a['repo']}`): " + "; ".join(parts))
+
+    lines += [
+        "",
+        "_Canonical = guildmaster's supplied set (its skills minus its own operator "
+        "verbs). \"Stale\" = the agent's copy differs from guildmaster's by content "
+        'fingerprint; "missing" = the agent lacks a canonical skill. Inventory only — '
+        "the dependency/relationship graph is steward's lane._",
+    ]
+    return "\n".join(lines)
+
+
 def _handle(args: argparse.Namespace) -> int:
     root = repo_root()
+
+    if args.scope != "self" and args.agent:
+        raise GuildError(
+            code=EXIT_USER_ERROR,
+            message="an agent name is only valid with --scope self",
+            remediation="drop the agent, or use `--scope self <agent>`",
+        )
 
     if args.scope == "self":
         if not args.agent:
@@ -259,13 +398,11 @@ def _handle(args: argparse.Namespace) -> int:
             )
         data = _build_self(root, args.agent)
         rendered = _render_self(data)
-    else:
-        if args.agent:
-            raise GuildError(
-                code=EXIT_USER_ERROR,
-                message="an agent name is only valid with --scope self",
-                remediation="drop the agent, or use `--scope self <agent>`",
-            )
+    elif args.scope == "mesh":
+        workspace_root = (args.workspace_root or root.parent).expanduser().resolve()
+        data = _build_mesh(root, workspace_root)
+        rendered = _render_mesh(data)
+    else:  # all
         data = _build_all(root)
         rendered = _render_all(data)
 

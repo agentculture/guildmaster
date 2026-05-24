@@ -113,11 +113,17 @@ owns the mesh's *inventory* surfaces per
 **inventory → guildmaster; judgment ("how do agents relate / are they aligned?")
 → steward.** Neither verb clones `steward overview`'s relationship graph.
 
-- `guild overview [--scope all|self <agent>]` — the supplier view: canonical
-  skill set + versions/origins, the `docs/skill-sources.md` ledger, and drift
-  signals (uncovered skills, per-agent kit gaps). Pure-Python, read-only, **no
-  `--apply`**. Pre-cutover the ledger has no downstream column, so drift is
-  inactive and the verb says so (reads whichever ledger is authoritative).
+- `guild overview [--scope all|self <agent>|mesh]` — the supplier view:
+  canonical skill set + versions/origins, the `docs/skill-sources.md` ledger,
+  and drift signals (uncovered skills, per-agent kit gaps). Pure-Python,
+  read-only, **no `--apply`**. Pre-cutover the ledger has no downstream column,
+  so `--scope all`/`self` drift is inactive and the verb says so (reads
+  whichever ledger is authoritative). `--scope mesh` is the ledger-free
+  alternative: it surveys every agent in the workspace
+  (`<workspace>/*/culture.yaml`) live off the filesystem and reports, per agent,
+  each canonical skill as current / **stale** (content fingerprint differs from
+  guildmaster's copy) / **missing** — answering "what's missing or stale, and
+  where" today. Still inventory only — no relationship graph.
 - `guild show <path-or-suffix>` — one agent's full config: detected prompt file
   (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), parallel `culture.yaml`, and the
   `.claude/skills` index. Thin wrapper that shells out to the vendored
