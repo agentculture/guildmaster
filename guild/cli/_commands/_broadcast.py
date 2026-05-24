@@ -9,6 +9,7 @@ target repos, read the ledger, and shell out to the vendored ``communicate``
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -17,6 +18,9 @@ from typing import Iterable
 from guild.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, GuildError
 from guild.cli._repo import iter_skills
 from guild.skills import INBOUND_ORIGINS, SELF_SKILLS
+
+# Resolve bash to an absolute path so we never invoke a partial executable name.
+_BASH = shutil.which("bash") or "/bin/bash"
 
 LEDGER_PATH = "docs/skill-sources.md"
 POST_ISSUE = ".claude/skills/communicate/scripts/post-issue.sh"
@@ -67,7 +71,7 @@ def post_issue(root: Path, repo: str, title: str, body: str) -> None:
         tmp.write(body)
         tmp.close()
         proc = subprocess.run(
-            ["bash", str(script), "--repo", repo, "--title", title, "--body-file", tmp.name],
+            [_BASH, str(script), "--repo", repo, "--title", title, "--body-file", tmp.name],
             capture_output=True,
             text=True,
         )
