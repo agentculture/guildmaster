@@ -135,21 +135,27 @@ def _resolve_suffix(target: str, repo_root: Path | None) -> Path:
     return resolved
 
 
+def _registry_prompt_names(registry_data: dict[str, Any]) -> list[str]:
+    """Distinct ``prompt:`` filenames declared in a backend-fingerprint registry."""
+    names: list[str] = []
+    for spec in (registry_data.get("backends") or {}).values():
+        prompt = spec.get("prompt") if isinstance(spec, dict) else None
+        if prompt and prompt not in names:
+            names.append(prompt)
+    return names
+
+
 def _prompt_filenames(skill_dir: Path | None) -> list[str]:
     """Recognized prompt filenames, from the vendored backend-fingerprint
     registry (shared source of truth with ``show.sh``), else the built-in list."""
-    if skill_dir is not None:
-        registry = skill_dir / "data" / "backend-fingerprints.yaml"
-        if registry.is_file():
-            data = yaml.safe_load(registry.read_text(encoding="utf-8")) or {}
-            names: list[str] = []
-            for spec in (data.get("backends") or {}).values():
-                prompt = spec.get("prompt") if isinstance(spec, dict) else None
-                if prompt and prompt not in names:
-                    names.append(prompt)
-            if names:
-                return sorted(names)
-    return list(_PROMPT_FALLBACK)
+    if skill_dir is None:
+        return list(_PROMPT_FALLBACK)
+    registry = skill_dir / "data" / "backend-fingerprints.yaml"
+    if not registry.is_file():
+        return list(_PROMPT_FALLBACK)
+    data = yaml.safe_load(registry.read_text(encoding="utf-8")) or {}
+    names = _registry_prompt_names(data)
+    return sorted(names) if names else list(_PROMPT_FALLBACK)
 
 
 def _build_json(target: str, directory: Path, skill_dir: Path | None) -> dict[str, Any]:
