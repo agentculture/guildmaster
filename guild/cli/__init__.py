@@ -34,6 +34,8 @@ def _build_parser() -> argparse.ArgumentParser:
     # at import time (matches the afi-cli pattern; cheap insurance).
     from guild.cli._commands import explain as _explain_cmd
     from guild.cli._commands import learn as _learn_cmd
+    from guild.cli._commands import onboard as _onboard_cmd
+    from guild.cli._commands import teach as _teach_cmd
     from guild.cli._commands import whoami as _whoami_cmd
 
     parser = _GuildArgumentParser(
@@ -50,6 +52,8 @@ def _build_parser() -> argparse.ArgumentParser:
     _whoami_cmd.register(sub)
     _learn_cmd.register(sub)
     _explain_cmd.register(sub)
+    _teach_cmd.register(sub)
+    _onboard_cmd.register(sub)
 
     return parser
 

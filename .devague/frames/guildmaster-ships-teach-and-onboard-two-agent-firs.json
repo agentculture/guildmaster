@@ -1,0 +1,440 @@
+{
+  "slug": "guildmaster-ships-teach-and-onboard-two-agent-firs",
+  "title": "guildmaster ships /teach and /onboard: two agent-first verbs layered over its announce-skill-update broadcast. 'guild teach' pushes a chosen SET of skills to a chosen SET of mesh agents in one command; 'guild onboard' welcomes a brand-new sibling agent with the full canonical skill kit, an identity-setup brief, ledger registration, and post-onboard verification. Both default to dry-run; --apply files the issues.",
+  "schema_version": 1,
+  "status": "exported",
+  "created": "2026-05-24T08:45:11Z",
+  "updated": "2026-05-24T09:21:31Z",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "guildmaster ships /teach and /onboard: two agent-first verbs layered over its announce-skill-update broadcast. 'guild teach' pushes a chosen SET of skills to a chosen SET of mesh agents in one command; 'guild onboard' welcomes a brand-new sibling agent with the full canonical skill kit, an identity-setup brief, ledger registration, and post-onboard verification. Both default to dry-run; --apply files the issues.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h1",
+          "text": "teach/onboard add NO new posting or templating logic \u2014 every issue is produced by announce-skill-update. Round-trip: 'onboard X' == 'teach <all-canonical> --new --to X' + ledger registration + verification record.",
+          "status": "rejected"
+        },
+        {
+          "id": "h8",
+          "text": "onboard X == teach <all-canonical> to X in NEW framing + ledger registration + verification record. teach is the single rendering+posting engine; onboard adds only kit-selection + bookkeeping. No separate broadcast path (no announce-skill-update verb) exists.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [
+        {
+          "id": "q1",
+          "text": "risk: If teach/onboard duplicate announce's posting/templating instead of composing it, the supplier ends up with two divergent broadcasters \u2014 exactly what #10's staged cutover forbids.",
+          "resolved": false,
+          "blocking": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": "c2",
+      "kind": "decision",
+      "text": "Direction = OUTBOUND/push: teach and onboard file GitHub issues on target agents' repos via announce-skill-update; they never vendor skills into a local checkout.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c3",
+      "kind": "decision",
+      "text": "Build layer = CLI verbs + skill wrappers: 'guild teach' and 'guild onboard' are CLI verbs that COMPOSE announce-skill-update (#10); /teach and /onboard are thin SKILL.md wrappers over them.",
+      "origin": "user",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c4",
+      "kind": "decision",
+      "text": "Onboard scope = ledger + identity + verify: beyond firing the kit, onboard (a) registers the new agent in docs/skill-sources.md, (b) includes an identity-setup section in the brief (culture.yaml + backend + prompt file), (c) records post-onboard verification state.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c5",
+      "kind": "decision",
+      "text": "Safe-by-default: both verbs default to dry-run (render briefs + show ledger/verification diffs); --apply files issues and writes the ledger (CLAUDE.md agent-first rule).",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c6",
+      "kind": "audience",
+      "text": "AgentCulture mesh operators and resident supplier agents (guildmaster itself; steward during transition). Each verb's TARGET is a sibling repo/agent: an existing consumer (teach=resync) or a brand-new sibling (onboard).",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h11",
+          "text": "Any real user of these verbs is always a supplier-agent operator running guildmaster, targeting a sibling repo that is either an existing ledger consumer (teach) or a brand-new sibling (onboard) \u2014 no other actor type needs teach/onboard.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c7",
+      "kind": "after_state",
+      "text": "An operator runs ONE command to propagate N skills to M agents (teach) or to fully onboard a new sibling (onboard) \u2014 instead of hand-running announce-skill-update once per skill, hand-editing the ledger, and hand-writing a welcome brief.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h12",
+          "text": "The full propagation (N skills x M agents) or onboarding ceremony completes from a SINGLE command invocation \u2014 no manual per-skill or per-agent follow-up step remains afterward.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c8",
+      "kind": "before_state",
+      "text": "Only the announce-skill-update atom exists (one skill -> N consumers from the ledger). Teaching a SET of skills is a manual loop; standing up a new agent means manual ledger edits + an ad-hoc onboarding brief (e.g. issue #1, hand-written by steward) + no verification step.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c9",
+      "kind": "why_it_matters",
+      "text": "guildmaster's charter (issue #1 \u00a71) is skills supplier/manager. 'Supply a set of skills' and 'onboard a new consumer' are its two headline verbs; they must be one-shot, safe-by-default, and leave the ledger correct \u2014 or the supplier role isn't real.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h13",
+          "text": "Without one-shot teach + onboard, guildmaster cannot credibly own the supplier role: the ledger drifts or onboarding stays manual. The two verbs are necessary, not nice-to-have, for the #1 \u00a71 charter.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c10",
+      "kind": "non_goal",
+      "text": "NOT a reimplementation of broadcast/templating/posting \u2014 teach/onboard compose announce-skill-update; #10 is a hard dependency.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c11",
+      "kind": "non_goal",
+      "text": "NOT inbound vendoring \u2014 onboard pushes issues to the new sibling; it never edits the target repo's files or copies skills into a local checkout.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c12",
+      "kind": "non_goal",
+      "text": "NOT remote identity creation \u2014 'identity scaffold' is a setup SECTION IN THE BRIEF the new sibling follows; guildmaster never writes their culture.yaml/prompt files.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c13",
+      "kind": "boundary",
+      "text": "Runs only AFTER the staged steward->guildmaster broadcaster cutover (#10) \u2014 not a second live broadcaster; no two competing ledgers mid-migration.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h14",
+          "text": "teach/onboard going live is GATED on the steward->guildmaster cutover; running them while steward still broadcasts would double-post, so neither the verbs nor the operator broadcast competitively before cutover.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c14",
+      "kind": "success_signal",
+      "text": "'guild teach --skill cicd --skill communicate --to tipalti --dry-run' renders a correct six-section brief for BOTH skills (right script list + CHANGELOG excerpt); --apply files both issues and exits non-zero if any post fails.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c15",
+      "kind": "success_signal",
+      "text": "'guild onboard --agent agentculture/newsib --dry-run' renders: the full canonical kit as new-briefs (devague trio carrying --origin agentculture/devague), an identity-setup section, the ledger diff that WOULD register newsib, and the verification record that WOULD be created; --apply does all of it.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c16",
+      "kind": "requirement",
+      "text": "teach loops announce-skill-update over the chosen skill set; per-skill targeting resolves from the ledger unless --to overrides (matching announce's own targeting contract).",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h2",
+          "text": "teaching skills [A,B] to agents [X,Y] files exactly the same issues as 'announce-skill-update --skill A --to X --to Y' then '--skill B --to X --to Y' \u2014 no extra or missing posts.",
+          "status": "rejected"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c17",
+      "kind": "requirement",
+      "text": "onboard fires the FULL canonical set in --new framing, passing --origin agentculture/devague for the inbound trio (think/spec-to-plan/assign-to-workforce).",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h3",
+          "text": "a newly-onboarded sibling sees the devague trio attributed to agentculture/devague (origin block present) with guildmaster as re-broadcaster, preserving the inbound/outbound distinction the ledger tracks.",
+          "status": "rejected"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c18",
+      "kind": "requirement",
+      "text": "onboard --apply registers the new agent in the downstream column of every canonical skill row in docs/skill-sources.md, idempotently (a second run is a no-op).",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h4",
+          "text": "after onboard --apply, docs/skill-sources.md lists the new agent in the downstream column of every canonical skill row; a second run changes zero bytes (idempotent, no duplicate entries).",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c19",
+      "kind": "requirement",
+      "text": "For each (skill, agent) pair, new-vs-resync framing is auto-detected from the ledger: existing consumer -> resync brief, new -> new brief; teach/onboard never post a 'new' brief to an existing consumer.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h5",
+          "text": "for each (skill, agent): if the agent already appears in that skill's ledger downstream -> resync framing, else -> new framing; never a 'new' brief to an existing consumer, never a 'resync' to a stranger.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c20",
+      "kind": "requirement",
+      "text": "onboard's brief includes an identity-setup section so a new sibling can pass steward doctor's prompt-file-present + backend-consistency invariants.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h6",
+          "text": "a sibling that follows the onboard brief's identity section ends up with a culture.yaml + matching prompt file that 'steward doctor --scope self' accepts (prompt-file-present + backend-consistency pass).",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c21",
+      "kind": "requirement",
+      "text": "With no --apply, neither verb posts an issue or mutates the ledger/verification state; both print exactly what they WOULD do and exit 0.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h7",
+          "text": "with no --apply, an issue/filesystem diff shows zero changes \u2014 no issue created, no ledger byte mutated \u2014 and exit code is 0.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c22",
+      "kind": "decision",
+      "text": "teach/onboard SUPERSEDE announce-skill-update: guildmaster ships NO separate verb by that name. teach (one skill -> one agent) covers the #10 broadcast case; teach/onboard own the rendering+posting+ledger machinery internally. The #10 broadcast ROLE is fulfilled \u2014 reconcile its literal acceptance criteria with steward via a reply on #10.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c23",
+      "kind": "decision",
+      "text": "Issue granularity = AGENT-MAJOR: one issue per target agent, bundling all relevant skills as per-skill sections (teach: every taught skill; onboard: all canonical + an identity-setup section). NOT one issue per skill. (Resolves parked v2.)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c24",
+      "kind": "decision",
+      "text": "teach skill-selection has NO implicit default: skills are explicit via --skill (repeatable) and --all (= canonical set, explicit). Bare invocation with no skills selected -> error. Hidden defaults create unexpected results. (Resolves parked v3.)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c25",
+      "kind": "before_state",
+      "text": "Guildmaster has NO broadcast capability of its own yet; steward holds the live broadcaster. Teaching a SET of skills or standing up a NEW agent is fully manual: hand-rendered briefs, hand-edited ledger, ad-hoc onboarding (e.g. issue #1), no verification step.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h15",
+          "text": "Today guildmaster has no broadcast verb of its own and no command performs set-level teaching or onboarding \u2014 the work is provably manual (demonstrable by the absence of such a verb in the CLI).",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c26",
+      "kind": "requirement",
+      "text": "teach renders ONE agent-major issue per target agent: for each agent, compose a per-skill section (script-list + CHANGELOG excerpt + cite locations \u2014 lifting steward's announce templates as per-skill SECTIONS) for every taught skill into a single issue, posted via agtag. Targeting from --to, falling back to the ledger per skill.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h9",
+          "text": "teaching skills [A,B] to agents [X,Y] files exactly TWO issues \u2014 one to X, one to Y \u2014 each bundling an A-section AND a B-section; never one issue per skill, never a separate per-skill broadcast call.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c27",
+      "kind": "requirement",
+      "text": "onboard reuses teach's rendering for the FULL canonical set in NEW framing, attributing the inbound trio (think/spec-to-plan/assign-to-workforce) to agentculture/devague as origin with guildmaster as re-broadcaster.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h10",
+          "text": "an onboarded sibling sees the devague trio (think/spec-to-plan/assign-to-workforce) attributed to agentculture/devague (origin block present) with guildmaster as re-broadcaster, rendered as sections within the single onboarding issue.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c28",
+      "kind": "success_signal",
+      "text": "'guild teach --skill cicd --skill communicate --to tipalti' (dry-run) renders ONE issue to tipalti containing BOTH a cicd section and a communicate section (each with correct script-list + CHANGELOG excerpt); --apply files that single issue; non-zero exit on any post failure.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h16",
+          "text": "The teach dry-run for two skills to one agent emits exactly ONE issue body containing two correctly-rendered per-skill sections \u2014 verifiable by inspecting the rendered markdown without posting anything.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c29",
+      "kind": "success_signal",
+      "text": "'guild onboard --agent agentculture/newsib' (dry-run) renders ONE consolidated onboarding issue: every canonical skill as a section (devague trio attributed to agentculture/devague) + an identity-setup section + the ledger diff that WOULD register newsib + the verification record; --apply files the one issue, writes the ledger, records pins.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h17",
+          "text": "The onboard dry-run emits exactly ONE issue body (all canonical sections + identity section) PLUS a shown-but-unapplied ledger diff and a verification record \u2014 all artifacts present in output, none posted or written.",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    }
+  ],
+  "open_vagueness": [
+    {
+      "id": "v1",
+      "text": "Build-order dependency: announce-skill-update (#10) is NOT built yet. teach/onboard are specced against its documented contract but cannot RUN until it lands \u2014 build #10 first or in the same effort.",
+      "kind": "follow_up",
+      "claim_id": null
+    },
+    {
+      "id": "v2",
+      "text": "Onboard brief shape: one consolidated onboarding issue (all skills + identity in one) vs N per-skill new-briefs (announce's native atom) + one umbrella identity issue. Affects how spammy onboarding a new repo is. Decide in planning.",
+      "kind": "unknown_nonblocking",
+      "claim_id": null
+    },
+    {
+      "id": "v3",
+      "text": "teach skill-selection UX: --skill NAME (repeatable) + --all (canonical set) + default-with-no-skills behavior (error vs all). Minor surface detail.",
+      "kind": "unknown_nonblocking",
+      "claim_id": null
+    },
+    {
+      "id": "v4",
+      "text": "Skill version-tracking surface and announce-skill-update internals are owned elsewhere (#10 + a version-tracking issue), not by teach/onboard.",
+      "kind": "out_of_scope",
+      "claim_id": null
+    },
+    {
+      "id": "v5",
+      "text": "Reply on issue #10 to reconcile: guildmaster fulfills the broadcast ROLE via teach/onboard (agent-major), NOT a verb named announce-skill-update with #10's exact flag surface; coordinate the steward->guildmaster cutover on that basis. (Supersedes the now-stale v1.)",
+      "kind": "follow_up",
+      "claim_id": null
+    }
+  ]
+}

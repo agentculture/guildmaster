@@ -39,3 +39,14 @@ def test_explain_unknown_topic_errors(
     err = capsys.readouterr().err
     assert "unknown topic" in err
     assert "valid topics" in err
+
+
+@pytest.mark.parametrize("verb", ["teach", "onboard"])
+def test_explain_knows_the_supplier_verbs(
+    verb: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The supplier verbs must be in the inventory — explain must not 404 them.
+    monkeypatch.chdir(REPO_ROOT)
+    rc = main(["explain", verb])
+    assert rc == 0
+    assert f"guild {verb}" in capsys.readouterr().out

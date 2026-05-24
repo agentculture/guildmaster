@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-24
+
+### Added
+
+- **`guild teach`** — propagate a *set* of skills to a *set* of mesh agents.
+  Agent-major: one GitHub issue per target agent, bundling a per-skill section
+  for every taught skill (not one issue per skill). Skills are explicit
+  (`--skill`, repeatable, or `--all`; no implicit default); targets from `--to`
+  (bare names get `--org`) or the ledger's current consumers; new-vs-resync
+  framing auto-detected per `(skill, agent)`. Dry-run by default; `--apply`
+  files via the vendored `communicate` `post-issue.sh`.
+- **`guild onboard`** — the new-sibling ceremony, built on the same engine as
+  `teach`: the full canonical kit in new framing + an identity-setup section +
+  idempotent ledger registration + a verification record (the pins to vendor).
+  Inbound skills (the devague trio) carry an `agentculture/devague` origin
+  block. Dry-run by default; `--apply` files the issue, writes the ledger,
+  records the pins.
+- **`/teach` and `/onboard` skill wrappers** (`.claude/skills/`) forwarding to
+  the CLI verbs.
+- `guild.skills` package — `ledger` (skill-sources parse + idempotent register),
+  `sources` (script list + CHANGELOG excerpt), `render` (agent-major issue
+  body), `identity` (onboarding identity-setup section).
+- `docs/cutover.md` — the steward→guildmaster broadcaster cutover precondition
+  (no `--apply` broadcasting before cutover; no two live broadcasters).
+
+### Changed
+
+- **`teach`/`onboard` supersede a separate `announce-skill-update` verb**
+  ([#10](https://github.com/agentculture/guildmaster/issues/10) asked for one;
+  guildmaster fulfills the broadcast *role* via these two agent-major verbs
+  instead). README + CLAUDE.md document the supplier surface. Specced and
+  planned via `/think` → `/spec-to-plan` (`docs/specs/`, `docs/plans/`).
+
 ## [0.2.0] - 2026-05-24
 
 ### Added

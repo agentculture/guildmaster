@@ -45,6 +45,37 @@ uv run guild learn
 uv run guild explain cicd
 ```
 
+### Supplier verbs — `teach` & `onboard`
+
+As the mesh's skills supplier, guildmaster propagates skills to sibling agents
+through two **agent-first write** verbs. Both default to **dry-run** (render the
+issues and the ledger/verification diffs); `--apply` files them.
+
+| Verb | What it does |
+|------|--------------|
+| `guild teach --skill <name> … --to <agent> …` | Teach a chosen **set** of skills to a chosen **set** of mesh agents. |
+| `guild onboard --agent <owner/repo>` | Welcome a **brand-new** sibling with the full canonical kit, an identity-setup section, ledger registration, and a verification record. |
+
+**Agent-major, not skill-major.** A run files **one GitHub issue per target
+agent**, bundling a per-skill *section* for every skill that agent receives —
+not one issue per skill. New-vs-resync framing is auto-detected per
+`(skill, agent)` from the `docs/skill-sources.md` ledger. Skills must be chosen
+explicitly (`--skill`, repeatable, or `--all`) — there is no implicit default.
+
+**These supersede a separate `announce-skill-update` verb.** `teach` is the
+single render-and-post engine; `onboard` is "`teach` the whole canonical kit"
+plus ledger registration, the identity section, and a verification record. There
+is no standalone broadcast verb (cf.
+[issue #10](https://github.com/agentculture/guildmaster/issues/10), which asked
+for one — guildmaster fulfills the broadcast *role* via these two verbs instead).
+
+**Before → after.** Today guildmaster has no broadcast verb of its own —
+`steward` runs the live broadcaster, and teaching a set of skills or standing up
+a new sibling is manual (hand-rendered briefs, hand-edited ledger, no
+verification). After: **one command** propagates a skill set, or onboards a
+sibling end-to-end. Going live is gated on the staged steward→guildmaster
+cutover — see [`docs/cutover.md`](docs/cutover.md).
+
 ## Develop
 
 ```bash
