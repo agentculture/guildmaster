@@ -31,27 +31,30 @@ Everything under "Project shape" and "Build / test / publish" below describes
 the **target** the resident agent is scaffolding toward, per issue #1 — do not
 assume those files exist until you have created them.
 
-## The open coordination question (settle before going deep)
+## Division of labor with steward (decided)
 
-guildmaster exists to **take skills work off steward** — but that overlaps
-steward's current role, and **the division of labor is not yet settled**. Before
-building the management/supplier layer, the call must be made explicitly (reply
-on issue #1 or open one on `agentculture/steward`):
+guildmaster exists to **take skills work off steward**, and the split (issue #1
+§1) is settled: **guildmaster becomes the skills supplier/manager.** It takes
+ownership of —
 
-- **steward owns today:** the canonical upstream skill set, the
-  upstream/downstream ledger (`../steward/docs/skill-sources.md`), the broadcast
-  verb (`steward announce-skill-update`), and the overview surface
-  (`steward overview` / `steward doctor`).
-- **The fork:** does guildmaster *become* the supplier/manager (taking the
-  ledger + broadcast + version tracking, steward retreating to
-  agent-alignment), or *complement* steward (guildmaster owns skill
-  **versioning** + a richer **overview**, steward keeps the ledger)? This decides
-  who is upstream for what.
+- the **canonical upstream skill set** (the source-of-truth copies);
+- the **upstream/downstream ledger** (`skill-sources.md`, migrating from
+  steward — see below);
+- the **broadcast verb** (`announce-skill-update`) that notifies consumers when
+  a skill changes; and
+- **skill version tracking**.
 
-Until that lands, guildmaster onboards as a **consumer** sibling (vendor the
-canonical skills like every other sibling). That is the correct first step
-regardless of outcome — you cannot credibly *manage* the skill stack until you
-*run* it yourself.
+**steward retreats to agent-alignment** — `steward doctor` (sibling health /
+compliance) and `steward overview` (ecosystem sense-making) stay with steward.
+This change is recorded on issue #1; until guildmaster's supplier surface
+actually ships, steward continues to hold the live ledger and broadcast so the
+mesh isn't left without an owner mid-migration (no two competing ledgers).
+
+**Transition path — onboard as a consumer first.** Before building the supplier
+layer, guildmaster vendors the canonical skills like every other sibling: you
+cannot credibly *manage* the skill stack until you *run* it yourself. The
+ledger, broadcast, and version-tracking responsibilities transfer from steward
+once the consuming + managing surface is in place.
 
 ## Project shape (target — afi-cli pattern, no `src/`)
 
@@ -126,17 +129,20 @@ Per-machine paths live in `.claude/skills.local.yaml` (git-ignored); a committed
 `.claude/skills.local.yaml.example` documents every key. Skills read the local
 file, falling back to the example.
 
-**Canonical skill set to vendor** (steward is upstream for all six; copy from
-`../steward/.claude/skills/<name>/`): `cicd` (PR lifecycle), `communicate`
-(cross-repo issue I/O + mesh messaging), `version-bump`, `run-tests`,
-`sonarclaude` (SonarCloud gate), and `doc-test-alignment` (stub today — vendor
-to be ready). For a PyPI-published CLI, also vendor `pypi-maintainer`. The
-upstream/downstream map is steward's `docs/skill-sources.md`
-(`../steward/docs/skill-sources.md`, or
+**Canonical skill set to vendor** (steward holds the current canonical copies;
+copy from `../steward/.claude/skills/<name>/`): `cicd` (PR lifecycle),
+`communicate` (cross-repo issue I/O + mesh messaging), `version-bump`,
+`run-tests`, `sonarclaude` (SonarCloud gate), and `doc-test-alignment` (stub
+today — vendor to be ready). For a PyPI-published CLI, also vendor
+`pypi-maintainer`. The upstream/downstream map is `skill-sources.md` — today
+steward's (`../steward/docs/skill-sources.md`, or
 <https://github.com/agentculture/steward/blob/main/docs/skill-sources.md> for a
-standalone clone) — treat it as the source of truth when vendoring. When steward
-ships a skill change, it auto-files a migration brief on this repo via
-`steward announce-skill-update`.
+standalone clone); per the decided division of labor it **migrates to
+guildmaster**, which becomes the upstream owner. During the transition, vendor
+from steward's current copies and treat its ledger as source of truth until
+ownership transfers. Once guildmaster owns the broadcast, `announce-skill-update`
+moves here too; until then steward still auto-files migration briefs on this
+repo when a vendored skill changes.
 
 ## `steward doctor` invariants (build to pass these)
 
