@@ -66,6 +66,37 @@ and harmless on `claude-code`. This is the only divergence from upstream.
 | `spec-to-plan` | `devague` (`agentculture/devague`, `../devague/.claude/skills/spec-to-plan/`) | Operator for the **spec→plan** leg (`devague plan ...`): seed from a converged frame, cover every coverage target with acceptance-gated, acyclically-ordered tasks, park unknowns as risks, `export` once the plan converges. New in devague 0.4.0. **Divergence:** `type: command` added. Runtime dep: `uv tool install devague`. |
 | `assign-to-workforce` | `devague` (`agentculture/devague`, `../devague/.claude/skills/assign-to-workforce/`) | Operator for the **implementation** leg: reads `devague plan waves` (read-only) and fans out independent tasks to one agent per task per wave in isolated git worktrees, with main-agent TDD-gated merges. Three human gates: spec / split plan / final PR. The CLI stays non-orchestrating ([devague#20](https://github.com/agentculture/devague/issues/20)). New in devague 0.10.0. **Divergence:** `type: command` added. Runtime deps: `uv tool install devague`, `git worktree`, the vendored `cicd` skill (for the gate-3 `agex pr open`). |
 
+## Downstream broadcasts (guildmaster as re-broadcaster)
+
+guildmaster re-broadcasts the devague trio to the mesh. The table below records
+who has been notified to vendor it, so a later re-sync (when the trio changes
+upstream) knows the audience. This is guildmaster's first act as the trio's mesh
+re-broadcaster, slightly ahead of the formal supplier-role transfer from steward
+— the handoff of the `announce-skill-update` verb and ledger ownership is tracked
+in [steward#60](https://github.com/agentculture/steward/issues/60).
+
+**Broadcast 2026-05-24** — one combined "vendor the trio" issue per repo, authored
+via the `communicate` skill (`post-issue.sh`, signed `- guildmaster (Claude)`),
+origin attributed to `agentculture/devague`. Skills:
+`think`, `spec-to-plan`, `assign-to-workforce`.
+
+| Repo | Issue | Repo | Issue |
+|------|-------|------|-------|
+| `culture` | [#408](https://github.com/agentculture/culture/issues/408) | `cultureflare` | [#39](https://github.com/agentculture/cultureflare/issues/39) |
+| `agex-cli` | [#57](https://github.com/agentculture/agex-cli/issues/57) | `office-agent` | [#65](https://github.com/agentculture/office-agent/issues/65) |
+| `auntiepypi` | [#24](https://github.com/agentculture/auntiepypi/issues/24) | `shushu` | [#16](https://github.com/agentculture/shushu/issues/16) |
+| `appsec` | [#11](https://github.com/agentculture/appsec/issues/11) | `zehut` | [#18](https://github.com/agentculture/zehut/issues/18) |
+| `lecodeur` | [#3](https://github.com/agentculture/lecodeur/issues/3) | `tipalti` | [#15](https://github.com/agentculture/tipalti/issues/15) |
+| `lepenseur` | [#4](https://github.com/agentculture/lepenseur/issues/4) | `katvan` | [#39](https://github.com/agentculture/katvan/issues/39) |
+| `telek` | [#5](https://github.com/agentculture/telek/issues/5) | `cultureagent` | [#32](https://github.com/agentculture/cultureagent/issues/32) |
+| `teken` | [#23](https://github.com/agentculture/teken/issues/23) | | |
+| `antoine` | [#27](https://github.com/agentculture/antoine/issues/27) | `ghafi` | [#9](https://github.com/agentculture/ghafi/issues/9) |
+
+Excluded by design: `devague` (origin), `steward` (current re-broadcaster),
+`guildmaster` (self), the acp coding daemons `antigravityd` / `codexd` / `kirod`
+(no `.claude/skills/` dir — the vendoring recipe doesn't fit them yet), and the
+non-agent infra/lib/site repos.
+
 ## Vendoring policy
 
 - **Cite, don't import.** Skills are copied into this repo, not symlinked or

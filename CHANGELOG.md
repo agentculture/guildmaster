@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-05-24
+
+### Added
+
+- `docs/skill-sources.md` now records guildmaster's **downstream broadcasts** of
+  the devague trio (`think`, `spec-to-plan`, `assign-to-workforce`). guildmaster
+  re-broadcast the trio to 17 skill-vendoring agent repos on 2026-05-24 (one
+  combined "vendor the trio" issue per repo, via the `communicate` skill, origin
+  attributed to `agentculture/devague`), and the ledger lists each repo + issue.
+  This is guildmaster's first act as the trio's mesh re-broadcaster, ahead of the
+  formal supplier-role transfer — the `announce-skill-update` verb + ledger
+  handoff is tracked in
+  [steward#60](https://github.com/agentculture/steward/issues/60).
+
+### Changed
+
+### Fixed
+
 ## [0.2.0] - 2026-05-24
 
 ### Added
