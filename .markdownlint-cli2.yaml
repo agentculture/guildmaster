@@ -17,3 +17,10 @@ config:
 ignores:
   - "node_modules/**"
   - ".local/**"
+  # devague-generated artifacts (committed for provenance) — they reproduce the
+  # exact CLI export, so they are not subject to hand-authored prose lint.
+  - "docs/specs/**"
+  - "docs/plans/**"
+  # devague working state (frames/plans are committed as JSON; reviews are
+  # git-ignored) — not hand-authored prose.
+  - ".devague/**"
