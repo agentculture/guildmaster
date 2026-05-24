@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-05-24
+
+### Added
+
+- **Vendored devague's three workflow skills** under `.claude/skills/` (cite,
+  don't import) — `think` (idea→spec), `spec-to-plan` (spec→plan), and
+  `assign-to-workforce` (plan→parallel implementation), the operator chain for
+  the deterministic [`devague`](https://github.com/agentculture/devague) CLI.
+  These flow the opposite direction of guildmaster's supplier role: `devague` is
+  their author/upstream and `steward` re-broadcasts them to the mesh. Vendored
+  from steward's copy at `914d5ca`, which tracks devague `0.11.1` (`c04b595`,
+  MIT). Resolves [#5](https://github.com/agentculture/guildmaster/issues/5),
+  [#6](https://github.com/agentculture/guildmaster/issues/6), and
+  [#7](https://github.com/agentculture/guildmaster/issues/7).
+- `docs/skill-sources.md` — guildmaster's provenance ledger, scoped to what it
+  vendors as a consumer: the canonical set (upstream `steward`) and the inbound
+  devague trio (origin `devague`, re-broadcast via `steward`). The upstream
+  ledger/broadcast ownership migrates here later, per the issue #1 division of
+  labor.
+
+### Changed
+
+- The three vendored SKILL.md files carry a `type: command` frontmatter
+  divergence from their verbatim devague upstream: culture/agex's
+  `core.skill_loader` requires `name` + `description` + `type:`, and a type-less
+  SKILL.md is silently skipped by `backends/claude_code/probe.py`. guildmaster
+  declares an agent in `culture.yaml`, so the addition is load-bearing on the
+  culture backend and harmless on `claude-code`.
+
 ## [0.1.0] - 2026-05-24
 
 ### Added
