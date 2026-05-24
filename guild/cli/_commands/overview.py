@@ -146,56 +146,70 @@ def _build_self(root, agent: str) -> dict:
     }
 
 
+def _names_or(names, empty: str = "none") -> str:
+    """Backtick-join *names*, or *empty* when there are none."""
+    return ", ".join(f"`{n}`" for n in names) or empty
+
+
+def _render_canonical_table(skills: list[dict]) -> list[str]:
+    lines = [
+        f"## Canonical skill set ({len(skills)})",
+        "",
+        "| Skill | Origin | Version | Consumers |",
+        "|-------|--------|---------|-----------|",
+    ]
+    for sk in skills:
+        consumers = ", ".join(sk["consumers"]) if sk["consumers"] else "—"
+        lines.append(f"| `{sk['name']}` | {sk['origin']} | {sk['version']} | {consumers} |")
+    return lines
+
+
+def _render_ledger_section(data: dict) -> list[str]:
+    lines = ["## Ledger", ""]
+    if not data["has_supplier_ledger"]:
+        lines.append(
+            "No supplier ledger yet — the downstream consumer ledger transfers "
+            "from steward at cutover (`docs/cutover.md`). Showing the canonical "
+            "set only; drift signals activate post-cutover."
+        )
+    elif data["agents"]:
+        lines.append(
+            f"Consumers in the ledger ({len(data['agents'])}): " + _names_or(data["agents"])
+        )
+    else:
+        lines.append("Supplier ledger present, but no consumers registered yet.")
+    return lines
+
+
+def _render_drift_section(data: dict) -> list[str]:
+    lines = ["## Drift", ""]
+    if not data["has_supplier_ledger"]:
+        lines.append("_(inactive pre-cutover)_")
+        return lines
+    drift = data["drift"]
+    lines.append("Uncovered skills (no consumer): " + _names_or(drift["uncovered_skills"]))
+    lines.append("Unledgered canonical skills: " + _names_or(drift["unledgered_skills"]))
+    gapped = {a: g for a, g in drift["agent_gaps"].items() if g}
+    if not gapped:
+        lines.append("Per-agent kit gaps: none")
+        return lines
+    lines.append("Per-agent kit gaps:")
+    for agent, gaps in gapped.items():
+        lines.append(f"  - `{agent}`: missing " + _names_or(gaps))
+    return lines
+
+
 def _render_all(data: dict) -> str:
     lines = [
         "# guild overview — skills supplier (scope: all)",
         "",
         f"guild {data['version']} · ledger: `{data['ledger_path']}`",
         "",
-        f"## Canonical skill set ({len(data['canonical_skills'])})",
+        *_render_canonical_table(data["canonical_skills"]),
         "",
-        "| Skill | Origin | Version | Consumers |",
-        "|-------|--------|---------|-----------|",
-    ]
-    for sk in data["canonical_skills"]:
-        consumers = ", ".join(sk["consumers"]) if sk["consumers"] else "—"
-        lines.append(f"| `{sk['name']}` | {sk['origin']} | {sk['version']} | {consumers} |")
-    lines += ["", "## Ledger", ""]
-    if not data["has_supplier_ledger"]:
-        lines += [
-            "No supplier ledger yet — the downstream consumer ledger transfers "
-            "from steward at cutover (`docs/cutover.md`). Showing the canonical "
-            "set only; drift signals activate post-cutover.",
-        ]
-    else:
-        if data["agents"]:
-            lines.append(
-                f"Consumers in the ledger ({len(data['agents'])}): "
-                + ", ".join(f"`{a}`" for a in data["agents"])
-            )
-        else:
-            lines.append("Supplier ledger present, but no consumers registered yet.")
-    lines += ["", "## Drift", ""]
-    drift = data["drift"]
-    if not data["has_supplier_ledger"]:
-        lines.append("_(inactive pre-cutover)_")
-    else:
-        lines.append(
-            "Uncovered skills (no consumer): "
-            + (", ".join(f"`{s}`" for s in drift["uncovered_skills"]) or "none")
-        )
-        lines.append(
-            "Unledgered canonical skills: "
-            + (", ".join(f"`{s}`" for s in drift["unledgered_skills"]) or "none")
-        )
-        gapped = {a: g for a, g in drift["agent_gaps"].items() if g}
-        if gapped:
-            lines.append("Per-agent kit gaps:")
-            for agent, gaps in gapped.items():
-                lines.append(f"  - `{agent}`: missing " + ", ".join(f"`{s}`" for s in gaps))
-        else:
-            lines.append("Per-agent kit gaps: none")
-    lines += [
+        *_render_ledger_section(data),
+        "",
+        *_render_drift_section(data),
         "",
         "_For one agent's full config (prompt file + culture.yaml + skills), "
         "run `guild show <agent>`._",

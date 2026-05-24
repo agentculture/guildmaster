@@ -98,7 +98,7 @@ def test_overview_pre_cutover_consumer_ledger_degrades_gracefully(tmp_path, monk
     assert payload["agents"] == []
     assert {s["name"] for s in payload["canonical_skills"]} == {"cicd", "communicate"}
     # Human render explains the pre-cutover state.
-    rc = main(["overview"])
+    assert main(["overview"]) == 0
     out = capsys.readouterr().out
     assert "No supplier ledger yet" in out and "cutover" in out
 
