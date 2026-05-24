@@ -25,6 +25,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Mesh-survey robustness (Qodo review on #15): `discover_agents` and
+  `iter_skills` now skip non-UTF-8 / unreadable `culture.yaml` and `SKILL.md`
+  (one bad file in a surveyed repo no longer crashes the run), and
+  `skill_fingerprint` skips symlinks (never follows links outside the skill dir;
+  keeps the digest deterministic).
+
 ## [0.4.1] - 2026-05-24
 
 ### Added

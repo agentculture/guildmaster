@@ -110,7 +110,14 @@ def iter_skills(root: Path) -> list[Skill]:
         skill_md = child / "SKILL.md"
         if not (child.is_dir() and skill_md.is_file()):
             continue
-        fm = _parse_frontmatter(skill_md.read_text(encoding="utf-8"))
+        # Tolerate an unreadable / non-UTF-8 SKILL.md (skip the skill) — the mesh
+        # survey reads SKILL.md across arbitrary external repos, so one bad file
+        # must not crash the whole listing.
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        fm = _parse_frontmatter(text)
         name = str(fm.get("name") or child.name)
         description = " ".join(str(fm.get("description", "")).split())
         found.append(Skill(name=name, path=child, description=description))
@@ -168,7 +175,7 @@ def discover_agents(
             continue
         try:
             data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-        except (OSError, yaml.YAMLError):
+        except (OSError, UnicodeDecodeError, yaml.YAMLError):
             continue
         for entry in _agent_entries(data if isinstance(data, dict) else {}):
             suffix = entry.get("suffix")
@@ -187,15 +194,20 @@ def skill_fingerprint(skill_dir: Path) -> str:
     relative path + bytes hashed into one SHA-256) so two copies of a skill
     compare equal iff their tracked content matches — the basis for the
     current/stale signal in ``guild overview --scope mesh``. ``__pycache__`` and
-    ``*.pyc`` are skipped (build artifacts, not skill content). Returns a short
-    12-char hex digest, or ``""`` when the directory is absent or empty.
+    ``*.pyc`` are skipped (build artifacts, not skill content); **symlinks are
+    skipped too** — following them would read content outside the skill dir and
+    make the digest non-deterministic. Returns a short 12-char hex digest, or
+    ``""`` when the directory is absent or empty.
     """
     if not skill_dir.is_dir():
         return ""
     files = sorted(
         p
         for p in skill_dir.rglob("*")
-        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
+        if p.is_file()
+        and not p.is_symlink()
+        and "__pycache__" not in p.parts
+        and p.suffix != ".pyc"
     )
     if not files:
         return ""

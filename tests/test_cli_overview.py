@@ -5,8 +5,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from guild import __version__
 from guild.cli import main
+from guild.cli._repo import skill_fingerprint
 
 _CULTURE = "agents:\n- suffix: guildmaster\n  backend: claude\n"
 
@@ -238,3 +241,46 @@ def test_overview_mesh_rejects_agent_positional(tmp_path, monkeypatch, capsys):
     rc = main(["overview", "--scope", "mesh", "somebody"])
     assert rc != 0
     assert "only valid with --scope self" in capsys.readouterr().err
+
+
+def test_overview_mesh_tolerates_unreadable_files(tmp_path, monkeypatch, capsys):
+    """The survey reads arbitrary external repos; a non-UTF-8 culture.yaml or
+    SKILL.md must be skipped, not crash the whole run (Qodo #15)."""
+    guild = _seed_workspace(tmp_path)
+    # A repo with a non-UTF-8 culture.yaml → dropped from discovery.
+    bad = guild.parent / "agentBad"
+    bad.mkdir()
+    (bad / "culture.yaml").write_bytes(b"\xff\xfe not utf-8")
+    # A valid agent whose one skill has a non-UTF-8 SKILL.md → that skill skipped.
+    bad2 = guild.parent / "agentBad2"
+    bad2.mkdir()
+    (bad2 / "culture.yaml").write_text("suffix: bad2\nbackend: claude\n")
+    sd = bad2 / ".claude" / "skills" / "cicd"
+    (sd / "scripts").mkdir(parents=True)
+    (sd / "scripts" / "run.sh").write_text("#!/bin/sh\n")
+    (sd / "SKILL.md").write_bytes(b"\xff\xfe\x00 invalid")
+
+    monkeypatch.chdir(guild)
+    rc = main(["overview", "--scope", "mesh", "--workspace-root", str(guild.parent), "--json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    by_suffix = {a["suffix"]: a for a in payload["agents"]}
+    assert "bad" not in by_suffix  # non-UTF-8 manifest dropped
+    assert "bad2" in by_suffix  # valid manifest kept
+    assert "cicd" in by_suffix["bad2"]["missing"]  # unreadable SKILL.md → not present
+
+
+def test_skill_fingerprint_skips_symlinks(tmp_path):
+    """A symlink inside a skill dir must not change the digest — following it
+    would read content outside the dir (Qodo #15)."""
+    skill = tmp_path / "skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text("---\nname: x\ndescription: x\n---\n")
+    baseline = skill_fingerprint(skill)
+    external = tmp_path / "external.txt"
+    external.write_text("content outside the skill dir")
+    try:
+        (skill / "link").symlink_to(external)
+    except (OSError, NotImplementedError):  # pragma: no cover - platform without symlinks
+        pytest.skip("symlinks unsupported on this platform")
+    assert skill_fingerprint(skill) == baseline
