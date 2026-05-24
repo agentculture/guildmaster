@@ -6,30 +6,39 @@ guildmaster's `teach` / `onboard` verbs are the mesh's skill-broadcast surface
 them up does **not** make guildmaster the live broadcaster the moment the code
 merges. There is a hard precondition.
 
+## Status: in progress — awaiting steward's ack (2026-05-24)
+
+guildmaster's side of the cutover has landed: `teach` / `onboard` are green and
+reviewed, and `docs/skill-sources.md` has been migrated to the **supplier
+shape** (canonical set + Downstream column carried over from steward's ledger).
+The handshake ping (step 1 below) has been sent. The **one remaining gate** is
+steward's ack that it has stopped broadcasting (step 2). Until that ack lands,
+`--apply` stays **off** — operate in dry-run only.
+
 ## Precondition (load-bearing)
 
-> **`teach` / `onboard` must not broadcast in production (`--apply`) until the
-> staged steward → guildmaster cutover has happened.** Until then, `steward`
-> holds the live ledger and fires drift broadcasts. Running guildmaster's
-> verbs with `--apply` before cutover would mean **two live broadcasters** and
-> double-posted briefs — exactly what
+> **`teach` / `onboard` must not broadcast in production (`--apply`) until
+> `steward` has confirmed it stopped broadcasting.** While both sides could
+> broadcast, running guildmaster's verbs with `--apply` would mean **two live
+> broadcasters** and double-posted briefs — exactly what
 > [issue #10](https://github.com/agentculture/guildmaster/issues/10) forbids.
 
 `--dry-run` (the default) is always safe: it renders briefs and ledger /
 verification diffs without posting. Only `--apply` is gated.
 
-## The cutover, in one step
+## The cutover, step by step
 
-When guildmaster's `teach` / `onboard` are green and reviewed:
+1. **[done]** guildmaster's `teach` / `onboard` are green and reviewed.
+2. **[done]** guildmaster migrates `docs/skill-sources.md` to the supplier shape
+   and takes ownership of the ledger + broadcast role + skill-version tracking
+   (this PR).
+3. **[done]** guildmaster pings `steward` that the broadcast surface is ready.
+4. **[pending — steward]** steward **stops broadcasting**, retires its
+   supplier-ledger ownership, and acks the handover.
+5. **[pending]** From then on, guildmaster is the sole broadcaster. No overlap,
+   no two competing ledgers — and `--apply` goes live.
 
-1. guildmaster pings `steward` that the broadcast surface is ready.
-2. In a single coordinated step: **steward stops broadcasting** and hands over
-   the canonical `docs/skill-sources.md` ledger; **guildmaster takes ownership**
-   of the ledger + the broadcast role + skill-version tracking.
-3. From then on, guildmaster is the sole broadcaster. No overlap, no two
-   competing ledgers.
-
-Until step 2 completes, treat any guildmaster `--apply` broadcast as **off** —
+Until step 4's ack lands, treat any guildmaster `--apply` broadcast as **off** —
 operate in dry-run only.
 
 ## Why no separate `announce-skill-update` verb
