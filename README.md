@@ -86,12 +86,13 @@ read-only — no `--apply`, no mutation, no drift verdict (judgment stays with
 
 | Verb | What it does |
 |------|--------------|
-| `guild overview [--scope all\|self <agent>]` | The supplier view: the canonical skill set + versions/origins, the `docs/skill-sources.md` ledger, and drift signals (uncovered skills, per-agent kit gaps). Feeds `teach` / `onboard`. |
+| `guild overview [--scope all\|self <agent>\|mesh]` | The supplier view: the canonical skill set + versions/origins, the `docs/skill-sources.md` ledger, and drift signals (uncovered skills, per-agent kit gaps). Feeds `teach` / `onboard`. `--scope mesh` instead surveys every agent's vendored skills live off the filesystem and flags what's **missing**/**stale** per agent. |
 | `guild show <path-or-suffix>` | One agent's full config in one view — its detected prompt file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), its parallel `culture.yaml`, and its `.claude/skills` index. |
 
 ```bash
 uv run guild overview                       # whole ledger + canonical set
 uv run guild overview --scope self daria    # one agent's kit + gaps
+uv run guild overview --scope mesh          # live survey: every agent's skills + missing/stale
 uv run guild show ../culture                 # config by path
 uv run guild show daria                      # config by registered suffix
 uv run guild show ../culture --json          # structured config object

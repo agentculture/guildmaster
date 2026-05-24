@@ -23,6 +23,9 @@ INBOUND_ORIGINS: dict[str, str] = {
     "assign-to-workforce": "agentculture/devague",
 }
 
-# guildmaster's own operator verbs — vendored here as skills but NOT part of
-# the canonical kit guildmaster supplies to siblings.
-SELF_SKILLS: frozenset[str] = frozenset({"teach", "onboard"})
+# guildmaster's own skills — present in ``.claude/skills/`` but NOT part of the
+# canonical kit guildmaster supplies to siblings: the operator verbs (``teach`` /
+# ``onboard``) and ``guild``, the affordance skill wrapping guildmaster's own
+# ``guild`` CLI surfaces (e.g. ``guild overview``), which is meaningless on a
+# sibling that doesn't ship the ``guild`` binary.
+SELF_SKILLS: frozenset[str] = frozenset({"teach", "onboard", "guild"})
