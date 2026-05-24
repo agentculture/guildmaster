@@ -32,6 +32,7 @@ vendored them during its initial scaffold
 | `sonarclaude` | `steward` (`../steward/.claude/skills/sonarclaude/`) | SonarCloud API client; project key from `$SONAR_PROJECT` or `--project`. |
 | `doc-test-alignment` | `steward` (`../steward/.claude/skills/doc-test-alignment/`) | Stub today; real implementation TBD upstream. |
 | `pypi-maintainer` | `steward` (`../steward/.claude/skills/pypi-maintainer/`) | Switches a PyPI install between pypi / test-pypi / local. |
+| `agent-config` | `steward` (`../steward/.claude/skills/agent-config/`) | Per-agent config view backing `guild show` ([#12](https://github.com/agentculture/guildmaster/issues/12)); `show.sh` + `data/backend-fingerprints.yaml` are vendored verbatim. **Divergence:** SKILL.md reframed from steward's alignment-judgment framing to guildmaster's inventory role and adds `type: command` for the culture backend's skill loader. |
 
 ## Inbound workflow skills (origin = `devague`, re-broadcast via `steward`)
 

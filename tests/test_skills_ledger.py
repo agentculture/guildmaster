@@ -5,7 +5,12 @@ Fixture ledger is defined inline; tests do NOT touch the live docs/skill-sources
 
 from __future__ import annotations
 
-from guild.skills.ledger import parse_consumers, register_consumer
+from guild.skills.ledger import (
+    consumer_map,
+    parse_consumers,
+    register_consumer,
+    supplier_skills,
+)
 
 # ---------------------------------------------------------------------------
 # Fixture ledger
@@ -199,3 +204,53 @@ class TestRegisterConsumer:
         result_via_vb = register_consumer(FIXTURE_LEDGER, "newsib", skills=["version-bump"])
         # Both should update the same row identically
         assert result_via_run == result_via_vb
+
+
+# ===========================================================================
+# supplier_skills / consumer_map tests (overview surface)
+# ===========================================================================
+
+
+# A consumer-side ledger (Skill | Upstream | Notes) — no Downstream column.
+# This is guildmaster's pre-cutover shape: not a supplier ledger.
+CONSUMER_SIDE_LEDGER = """\
+# Skill sources
+
+| Skill | Upstream | Notes |
+|-------|----------|-------|
+| `cicd` | `steward` | PR lifecycle |
+| `communicate` | `steward` | issue I/O |
+"""
+
+
+class TestSupplierSkills:
+    def test_lists_tracked_skills_in_order(self) -> None:
+        assert supplier_skills(FIXTURE_LEDGER) == [
+            "cicd",
+            "communicate",
+            "run-tests",
+            "version-bump",
+        ]
+
+    def test_consumer_side_ledger_has_no_supplier_skills(self) -> None:
+        """No 'Downstream' column → not a supplier table → empty (pre-cutover)."""
+        assert supplier_skills(CONSUMER_SIDE_LEDGER) == []
+
+    def test_empty_text(self) -> None:
+        assert supplier_skills("") == []
+
+
+class TestConsumerMap:
+    def test_keys_match_supplier_skills_values_match_parse_consumers(self) -> None:
+        cmap = consumer_map(FIXTURE_LEDGER)
+        assert list(cmap) == supplier_skills(FIXTURE_LEDGER)
+        assert cmap["cicd"] == parse_consumers(FIXTURE_LEDGER, "cicd")
+        assert cmap["cicd"] == ["tipalti", "daria"]
+
+    def test_tracked_skill_with_no_consumers_maps_to_empty_list(self) -> None:
+        cmap = consumer_map(FIXTURE_LEDGER)
+        assert cmap["communicate"] == []
+        assert cmap["run-tests"] == []
+
+    def test_consumer_side_ledger_yields_empty_map(self) -> None:
+        assert consumer_map(CONSUMER_SIDE_LEDGER) == {}

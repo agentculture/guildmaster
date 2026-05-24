@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-24
+
+### Added
+
+- **`guild overview`** — guildmaster's read-only skills-supplier overview surface
+  ([#12](https://github.com/agentculture/guildmaster/issues/12)): the canonical
+  skill set + versions/origins, the `docs/skill-sources.md` ledger view, and
+  drift signals (unledgered skills, uncovered skills, per-agent kit gaps).
+  `--scope all` (default) and `--scope self <agent>`; markdown or `--json`.
+  Pure-Python, read-only — no `--apply`, no mutation, no LLM. Degrades
+  gracefully pre-cutover: when the ledger has no downstream column the verb
+  reports the canonical set and notes that drift activates after the
+  steward→guildmaster cutover. Skills-scoped only — does not reproduce
+  `steward overview`'s ecosystem relationship graph.
+- **`guild show <path-or-suffix>`** — one agent's full config in one read-only
+  view ([#12](https://github.com/agentculture/guildmaster/issues/12)): the
+  detected system-prompt file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), the
+  parallel `culture.yaml`, and the `.claude/skills` index. Path mode or suffix
+  mode (resolved via `culture_server_yaml`). Target resolution happens once in
+  Python; the human view shells out to the vendored `agent-config` `show.sh`
+  (mirroring `steward show`), while `--json` emits a structured object (prompt
+  file + contents, parsed `culture.yaml`, skills index) built natively. Failure
+  output stays the structured `error:` / `hint:` shape. Inventory only — it
+  reports, it does not judge drift.
+- **`agent-config` skill** vendored from steward (cite-don't-import) to back
+  `guild show`: `scripts/show.sh` + `data/backend-fingerprints.yaml` verbatim;
+  SKILL.md reframed for guildmaster's inventory role + `type: command`. Recorded
+  in `docs/skill-sources.md`; now part of the canonical skill set.
+- `guild.skills.ledger.supplier_skills` / `consumer_map` — pure helpers that
+  read the supplier ledger (skills tracked + their consumers) for `overview`.
+
+### Changed
+
+- `VERBS` index + `README.md` + `CLAUDE.md` document the new inventory verbs and
+  the issue #12 division of labor (inventory → guildmaster; alignment judgment →
+  steward).
+
 ## [0.3.0] - 2026-05-24
 
 ### Added
