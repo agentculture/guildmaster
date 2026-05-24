@@ -7,8 +7,8 @@ but it onboards as a consumer first, vendoring the canonical skill set like ever
 other sibling before taking over the upstream ledger, the
 `announce-skill-update` broadcast, and skill-version tracking. Until that
 ownership transfers, `steward` holds the live supplier ledger
-(`../steward/docs/skill-sources.md`) and this file records only what guildmaster
-itself vendors.
+(`../steward/docs/skill-sources.md`) and this file records the skills guildmaster
+vendors plus the few it originates itself.
 
 Everything here follows **cite, don't import**: each skill is *copied* into
 `.claude/skills/<name>/`, not symlinked or installed as a cross-repo dependency.
@@ -66,6 +66,18 @@ and harmless on `claude-code`. This is the only divergence from upstream.
 | `think` | `devague` (`agentculture/devague`, `../devague/.claude/skills/think/`) | Operator for the **idea→spec** leg (working backwards: announcement frame → capture/classify claims → interrogate with honesty conditions → park open vagueness → `export` once the frame converges). Renamed from `devague` in devague 0.4.0. **Divergence:** `type: command` added. Runtime dep: `uv tool install devague`. |
 | `spec-to-plan` | `devague` (`agentculture/devague`, `../devague/.claude/skills/spec-to-plan/`) | Operator for the **spec→plan** leg (`devague plan ...`): seed from a converged frame, cover every coverage target with acceptance-gated, acyclically-ordered tasks, park unknowns as risks, `export` once the plan converges. New in devague 0.4.0. **Divergence:** `type: command` added. Runtime dep: `uv tool install devague`. |
 | `assign-to-workforce` | `devague` (`agentculture/devague`, `../devague/.claude/skills/assign-to-workforce/`) | Operator for the **implementation** leg: reads `devague plan waves` (read-only) and fans out independent tasks to one agent per task per wave in isolated git worktrees, with main-agent TDD-gated merges. Three human gates: spec / split plan / final PR. The CLI stays non-orchestrating ([devague#20](https://github.com/agentculture/devague/issues/20)). New in devague 0.10.0. **Divergence:** `type: command` added. Runtime deps: `uv tool install devague`, `git worktree`, the vendored `cicd` skill (for the gate-3 `agex pr open`). |
+
+## guildmaster-origin skills (origin = `guildmaster`)
+
+These are guildmaster's **own** skills — not vendored from anyone, so there is
+no upstream to re-sync from. They are the affordance + narration layer for
+guildmaster's own CLI surfaces: the CLI verb is the implementation, and the
+skill is how the resident agent knows when to reach for it and how to narrate
+the result.
+
+| Skill | Origin | Notes |
+|-------|--------|-------|
+| `guild` | `guildmaster` (this repo) | Houses guildmaster's own read-only supplier surfaces. Today: `scripts/overview.sh`, the wrapper backing the pure-Python `guild overview` verb ([#12](https://github.com/agentculture/guildmaster/issues/12)) — the skills-supplier half of the inventory split, sibling to the vendored `agent-config` skill that backs `guild show`. Its `SKILL.md` is the skills-scoped excerpt of steward's `org-overview` narration contract (three layers: facts / inferred / suggestions; reflect-only). Surfaces skills/version drift that feeds `teach` / `onboard`; does NOT narrate steward's relationship graph or judge alignment. |
 
 ## Vendoring policy
 

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-05-24
+
+### Added
+
+- **`guild` skill** — the backing affordance + narration skill for `guild
+  overview`, the supplier-overview half of the inventory split (sibling to the
+  vendored `agent-config` skill that backs `guild show`). `scripts/overview.sh`
+  is a deterministic wrapper that resolves how to invoke `guild` (installed →
+  `uv` → `python -m guild`) and delegates to `guild overview`; `SKILL.md` is the
+  **skills-scoped excerpt of steward's `org-overview` narration contract**
+  ([#12](https://github.com/agentculture/guildmaster/issues/12),
+  cite-don't-import): narrate three separated layers — observed facts, inferred
+  relationships, suggestions (each naming its enacting `teach` / `onboard` /
+  ledger command), reflect-only. Skills/version scope only — does NOT narrate
+  steward's relationship-graph signals (`overlap` / `over-connected-agent` /
+  `isolated-repo`). Recorded in `docs/skill-sources.md` as guildmaster-origin
+  (not vendored).
+
+### Changed
+
+- `SELF_SKILLS` now includes `guild` — guildmaster's own affordance skill is
+  excluded from the canonical kit it supplies to siblings (like `teach` /
+  `onboard`), since it wraps the `guild` binary and is meaningless elsewhere.
+
+### Fixed
+
 ## [0.4.0] - 2026-05-24
 
 ### Added

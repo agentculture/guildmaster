@@ -36,9 +36,9 @@ def _seed(tmp_path: Path, ledger: str) -> Path:
     (tmp_path / "culture.yaml").write_text(_CULTURE)
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "skill-sources.md").write_text(ledger)
-    # Two canonical skills + guildmaster's own verbs (teach/onboard, excluded
-    # from the canonical set).
-    for skill in ("cicd", "communicate", "teach", "onboard"):
+    # Two canonical skills + guildmaster's own skills (teach/onboard verbs and
+    # the `guild` affordance skill — all excluded from the canonical set).
+    for skill in ("cicd", "communicate", "teach", "onboard", "guild"):
         d = tmp_path / ".claude" / "skills" / skill
         (d / "scripts").mkdir(parents=True)
         (d / "scripts" / "run.sh").write_text("#!/bin/sh\n")
@@ -54,9 +54,10 @@ def test_overview_all_lists_canonical_set_excluding_self_skills(tmp_path, monkey
     assert rc == 0
     out = capsys.readouterr().out
     assert "scope: all" in out
-    # Canonical skills present; guildmaster's own verbs are NOT canonical.
+    # Canonical skills present; guildmaster's own skills are NOT canonical.
     assert "`cicd`" in out and "`communicate`" in out
     assert "`teach`" not in out and "`onboard`" not in out
+    assert "`guild`" not in out
 
 
 def test_overview_all_json_structure_and_consumers(tmp_path, monkeypatch, capsys):
