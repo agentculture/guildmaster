@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-24
+
+### Changed
+
+- **steward → guildmaster cutover (guildmaster's side).** Migrated
+  `docs/skill-sources.md` from the consumer-side "Upstream / Notes" view to the
+  **supplier shape**: a canonical-set table with a "Downstream copies (known)"
+  column (upstream reassigned `steward` → `guildmaster`), the devague-origin
+  re-broadcast table, and a "Retained by steward" section recording the
+  steward-specific skills (`org-overview`, steward's alignment `agent-config`
+  variant, `discord-notify`, `jekyll-test`, `notebooklm`) that stay with steward.
+  The downstream consumer lists were carried over verbatim from steward's ledger
+  at cutover. This activates resync-detection in `teach` / `onboard` and
+  skills-scoped drift in `guild overview --scope all` / `--scope self`
+  ([issue #1 §1](https://github.com/agentculture/guildmaster/issues/1),
+  `docs/cutover.md`).
+- **`docs/cutover.md`** updated to the in-progress state: guildmaster's side is
+  done and the handshake ping sent; the one remaining gate before `--apply` goes
+  live is steward's ack that it has stopped broadcasting (no two live
+  broadcasters, per [#10](https://github.com/agentculture/guildmaster/issues/10)).
+
 ## [0.4.2] - 2026-05-24
 
 ### Added
