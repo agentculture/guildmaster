@@ -17,8 +17,11 @@ The authoritative onboarding brief for this repo is
 [**issue #1**](https://github.com/agentculture/guildmaster/issues/1), filed by
 `steward`. It is self-contained and is the source of truth for the target shape
 described below. `steward` is the reference exemplar — when in doubt, copy from
-`../steward/` (assumes the workspace layout where siblings are checked out in
-the same parent directory).
+it. Sibling paths in this file (e.g. `../steward/`) **assume the workspace
+layout** where siblings are checked out in the same parent directory; in a
+standalone clone, read the same files at
+<https://github.com/agentculture/steward> or clone steward beside this repo
+first. Each such path below names the project, not a guaranteed location.
 
 ## Current state vs. target
 
@@ -128,9 +131,12 @@ file, falling back to the example.
 (cross-repo issue I/O + mesh messaging), `version-bump`, `run-tests`,
 `sonarclaude` (SonarCloud gate), and `doc-test-alignment` (stub today — vendor
 to be ready). For a PyPI-published CLI, also vendor `pypi-maintainer`. The
-upstream/downstream map is `../steward/docs/skill-sources.md` — treat it as the
-source of truth when vendoring. When steward ships a skill change, it auto-files
-a migration brief on this repo via `steward announce-skill-update`.
+upstream/downstream map is steward's `docs/skill-sources.md`
+(`../steward/docs/skill-sources.md`, or
+<https://github.com/agentculture/steward/blob/main/docs/skill-sources.md> for a
+standalone clone) — treat it as the source of truth when vendoring. When steward
+ships a skill change, it auto-files a migration brief on this repo via
+`steward announce-skill-update`.
 
 ## `steward doctor` invariants (build to pass these)
 
@@ -143,5 +149,8 @@ a migration brief on this repo via `steward announce-skill-update`.
 - **backend-consistency** — the declared `backend` agrees with the prompt files
   on disk (don't declare `backend: claude` with only an `AGENTS.md`).
 
-Run `steward doctor --scope self .` from `../steward` to check guildmaster
-against these.
+Check guildmaster against these with `steward doctor --scope self <path-to-guildmaster>`,
+run from a steward checkout (`../steward` under the workspace layout; otherwise
+clone <https://github.com/agentculture/steward> or use an installed `steward`
+CLI). steward runs its own vendored portability check against the target, so
+guildmaster doesn't need to vendor it first.
