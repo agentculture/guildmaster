@@ -146,8 +146,10 @@ repo when a vendored skill changes.
 
 ## `steward doctor` invariants (build to pass these)
 
-- **portability** — no `/home/<user>/...` paths in tracked files; no `~/.<dotfile>`
-  config refs in committed `.md`/`.yaml`/`.toml`/`.json` (outside documented carve-outs).
+- **portability** — no absolute user-home paths in tracked files, and no
+  per-user home-directory dotfile config references in committed
+  `.md`/`.yaml`/`.toml`/`.json` (outside documented carve-outs). Commit a
+  repo-local config or document a portable lookup instead.
 - **skills-convention** — every `.claude/skills/<name>/SKILL.md` has a sibling
   `scripts/` directory and matching frontmatter `name`.
 - **prompt-file-present** — a repo declaring an agent in `culture.yaml` has a
