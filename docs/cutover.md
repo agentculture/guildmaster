@@ -6,40 +6,46 @@ guildmaster's `teach` / `onboard` verbs are the mesh's skill-broadcast surface
 them up does **not** make guildmaster the live broadcaster the moment the code
 merges. There is a hard precondition.
 
-## Status: in progress — awaiting steward's ack (2026-05-24)
+## Status: complete (2026-05-24)
 
-guildmaster's side of the cutover has landed: `teach` / `onboard` are green and
-reviewed, and `docs/skill-sources.md` has been migrated to the **supplier
-shape** (canonical set + Downstream column carried over from steward's ledger).
-The handshake ping (step 1 below) has been sent. The **one remaining gate** is
-steward's ack that it has stopped broadcasting (step 2). Until that ack lands,
-`--apply` stays **off** — operate in dry-run only.
+The steward → guildmaster broadcaster cutover is **done**. guildmaster owns the
+supplier ledger (`docs/skill-sources.md`, migrated to supplier shape in
+[#16](https://github.com/agentculture/guildmaster/pull/16)), and the operator
+confirmed steward has stopped firing `announce-skill-update` and accepts
+`teach` / `onboard` as the broadcast role. guildmaster is now the **sole
+broadcaster**; `--apply` is **live**. First post-cutover broadcast: the
+2026-05-24 `guild teach` resync to 7 agents (katvan, antoine, appsec, culture,
+auntiepypi, agex-cli, devague).
 
-## Precondition (load-bearing)
+> **Records reconciliation (steward side).** steward's [PR #62](https://github.com/agentculture/steward/pull/62)
+> recorded only a *partial* handoff (devague-trio downstream tracking) and its
+> ledger/[#10](https://github.com/agentculture/guildmaster/issues/10) prose still
+> describe steward as the live broadcaster "until `guild announce-skill-update`
+> ships". That verb is intentionally **not** shipping — `teach` / `onboard`
+> supersede it. The operational handover is confirmed; steward's written records
+> are to be reconciled to match (steward's lane / #10).
+
+## Precondition (historical — now satisfied)
 
 > **`teach` / `onboard` must not broadcast in production (`--apply`) until
-> `steward` has confirmed it stopped broadcasting.** While both sides could
-> broadcast, running guildmaster's verbs with `--apply` would mean **two live
-> broadcasters** and double-posted briefs — exactly what
-> [issue #10](https://github.com/agentculture/guildmaster/issues/10) forbids.
+> `steward` has confirmed it stopped broadcasting.** Running both broadcasters
+> at once would mean **two live broadcasters** and double-posted briefs — exactly
+> what [issue #10](https://github.com/agentculture/guildmaster/issues/10) forbids.
 
-`--dry-run` (the default) is always safe: it renders briefs and ledger /
-verification diffs without posting. Only `--apply` is gated.
+This precondition is **satisfied** as of 2026-05-24. `--dry-run` (the default)
+remains the safe rendering mode; `--apply` is now sanctioned.
 
 ## The cutover, step by step
 
 1. **[done]** guildmaster's `teach` / `onboard` are green and reviewed.
-2. **[done]** guildmaster migrates `docs/skill-sources.md` to the supplier shape
-   and takes ownership of the ledger + broadcast role + skill-version tracking
-   (this PR).
-3. **[done]** guildmaster pings `steward` that the broadcast surface is ready.
-4. **[pending — steward]** steward **stops broadcasting**, retires its
-   supplier-ledger ownership, and acks the handover.
-5. **[pending]** From then on, guildmaster is the sole broadcaster. No overlap,
-   no two competing ledgers — and `--apply` goes live.
-
-Until step 4's ack lands, treat any guildmaster `--apply` broadcast as **off** —
-operate in dry-run only.
+2. **[done]** guildmaster migrated `docs/skill-sources.md` to the supplier shape
+   and took ownership of the ledger + broadcast role + skill-version tracking
+   ([#16](https://github.com/agentculture/guildmaster/pull/16)).
+3. **[done]** guildmaster pinged `steward` that the broadcast surface is ready
+   ([steward#61](https://github.com/agentculture/steward/issues/61)).
+4. **[done]** steward stopped broadcasting and the operator confirmed the
+   handover (records reconciliation pending on steward's side — see note above).
+5. **[done]** guildmaster is the sole broadcaster; `--apply` is live.
 
 ## Why no separate `announce-skill-update` verb
 
