@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-26
+
+### Added
+
+- **`guild create`** — stand up a brand-new AgentCulture sibling agent end-to-end
+  from one request ([issue #17](https://github.com/agentculture/guildmaster/issues/17)).
+  A single `guild create --agent <owner/repo> --desc <description>` call creates
+  a public, MIT-licensed GitHub repo, clones it into the workspace, vendors the
+  canonical skill kit directly into `.claude/skills/`, writes a self-initializing
+  `CLAUDE.md` (with `/init` re-init instruction), `culture.yaml` identity, and
+  `skills.local.yaml.example`, commits and pushes the genesis commit to `main`,
+  and registers the new agent in `docs/skill-sources.md`. Dry-run by default;
+  `--apply` executes the irreversible acts (GitHub creation, clone, push). Distinct
+  from `guild onboard` (which targets existing repos) — `create` is for repos
+  guildmaster provisions directly, zero hand-built scaffold. Includes the
+  `guild/scaffold/` subpackage with pure, side-effect-light builders for manifest,
+  kit, identity, and workspace; the ProvisionPlan dataclass; and the executor that
+  runs the six atomic sub-actions behind `--apply`.
+
+### Changed
+
+### Fixed
+
 ## [0.5.1] - 2026-05-24
 
 ### Changed
