@@ -4,7 +4,7 @@ description: >
   Run guildmaster's supplier surfaces — overview, show, and create (provision).
   Overview (scripts/overview.sh) emits the canonical skill set, versions/origins,
   docs/skill-sources.md ledger, and drift signals for narration. Show
-  (scripts/show.sh) displays one agent's config. Create (scripts/create.sh)
+  (the `guild show` verb) displays one agent's config. Create (scripts/create.sh)
   invokes the provisioning surface: build a dry-run plan for a new repo, or
   --apply to execute (GitHub repo creation, clone, kit+identity, push, ledger
   registration). Use when an operator asks "what skills do we supply",

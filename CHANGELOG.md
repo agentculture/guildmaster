@@ -10,7 +10,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - **`guild create`** — stand up a brand-new AgentCulture sibling agent end-to-end
-  from one request ([issue #17](https://github.com/agentculture/guildmaster/issues/17)).
+  from one request.
   A single `guild create --agent <owner/repo> --desc <description>` call creates
   a public, MIT-licensed GitHub repo, clones it into the workspace, vendors the
   canonical skill kit directly into `.claude/skills/`, writes a self-initializing
