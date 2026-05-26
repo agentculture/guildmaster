@@ -113,9 +113,18 @@ def _repo_https_url(agent: str) -> str:
     return f"https://github.com/{agent}.git"
 
 
-def _dir_is_nonempty(path: Path) -> bool:
-    """True iff *path* exists, is a directory, and contains at least one entry."""
-    return path.is_dir() and any(path.iterdir())
+def _dest_is_unusable(path: Path) -> bool:
+    """True iff *path* exists as anything other than an empty directory.
+
+    The clone destination must be absent or an empty dir. A file, symlink, or
+    non-empty dir would otherwise pass the boundary guard and let ``apply``
+    create the remote repo before ``git clone`` fails — a partial scaffold.
+    """
+    if not path.exists():
+        return False
+    if not path.is_dir():
+        return True  # a file or symlink-to-file at the destination
+    return any(path.iterdir())  # a non-empty directory
 
 
 def _check(result: RunResult, message: str, code: int) -> None:
@@ -176,12 +185,13 @@ def preflight(
             remediation=("choose a different --agent name, or delete the existing repo first"),
         )
 
-    # 3. local boundary — never clobber a non-empty destination.
-    if _dir_is_nonempty(clone_dest):
+    # 3. local boundary — the destination must be absent or an empty dir.
+    #    A file/symlink/non-empty dir would clone-fail AFTER the remote exists.
+    if _dest_is_unusable(clone_dest):
         raise GuildError(
             code=EXIT_USER_ERROR,
-            message=f"clone destination {clone_dest} already exists and is non-empty",
-            remediation=("remove or empty the directory, or choose a different --workspace-root"),
+            message=f"clone destination {clone_dest} must be absent or an empty directory",
+            remediation=("remove it, empty the directory, or choose a different --workspace-root"),
         )
 
 

@@ -23,10 +23,12 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import keyword
 from pathlib import Path
 
 from guild.cli._commands import _broadcast
 from guild.cli._commands import _provision_template as _provision
+from guild.cli._errors import EXIT_USER_ERROR, GuildError
 from guild.cli._output import emit_result
 from guild.cli._repo import repo_root
 from guild.scaffold.instantiate import transform_plan as _transform_plan
@@ -109,6 +111,21 @@ def _handle(args: argparse.Namespace) -> None:
     root = repo_root()
     agent = _broadcast.normalize_target(args.agent, args.org)
     bare = agent.rsplit("/", 1)[-1]
+
+    # Fail fast (before any external act) if the repo name can't derive a valid
+    # Python package identifier — the derived pkg is both a directory name and a
+    # global rename token, so an invalid value (dots, leading digit) breaks the
+    # generated sibling.
+    pkg = bare.lower().replace("-", "_")
+    if not pkg.isidentifier() or keyword.iskeyword(pkg):
+        raise GuildError(
+            code=EXIT_USER_ERROR,
+            message=f"repo name {bare!r} derives an invalid Python package name {pkg!r}",
+            remediation=(
+                "use a repo name of letters/digits/hyphens that maps to a valid, "
+                "non-keyword Python identifier (e.g. not starting with a digit)"
+            ),
+        )
 
     # Resolve workspace root (parent of guildmaster if not supplied).
     workspace_root = args.workspace_root if args.workspace_root is not None else root.parent

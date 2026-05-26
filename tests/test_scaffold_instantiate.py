@@ -6,7 +6,6 @@ network, no subprocess, no real github.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -265,10 +264,11 @@ def test_transform_readme_heading_updated(tmp_path):
     dest = _build_fixture(tmp_path)
     transform_clone(dest, "appsec", "AppSec security scanner.", "claude")
     readme = (dest / "README.md").read_text()
-    # First heading must name the new agent.
-    first_heading = re.search(r"^#\s+([^\n]+)$", readme, re.MULTILINE)
-    assert first_heading is not None
-    assert "appsec" in first_heading.group(1).lower()
+    # First "# " heading must name the new agent (plain string scan — avoids a
+    # backtracking-prone regex / Sonar DoS hotspot).
+    heading = next((ln for ln in readme.splitlines() if ln.startswith("# ")), None)
+    assert heading is not None
+    assert "appsec" in heading.lower()
 
 
 def test_transform_readme_embeds_desc(tmp_path):

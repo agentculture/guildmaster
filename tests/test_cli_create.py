@@ -558,6 +558,51 @@ def test_create_apply_fails_fast_when_clone_dest_nonempty(tmp_path, monkeypatch)
     assert not any("gh repo create" in c for c in issued)
 
 
+def test_create_apply_fails_fast_when_clone_dest_is_a_file(tmp_path, monkeypatch):
+    """A file/symlink at the destination must be rejected BEFORE the repo is
+    created (else apply makes the remote, then git clone fails → partial)."""
+    root = _seed(tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    monkeypatch.chdir(root)
+
+    # Pre-create the clone destination as a FILE (not a dir).
+    (workspace / "newsib").write_text("I am a file, not a directory.")
+
+    runner = _FakeRunner()
+    import guild.cli._commands._provision_template as _prov
+
+    monkeypatch.setattr(_prov, "default_runner", runner)
+
+    rc = main(
+        [
+            "create",
+            "--agent",
+            "newsib",
+            "--desc",
+            "File at dest.",
+            "--apply",
+            "--workspace-root",
+            str(workspace),
+        ]
+    )
+    assert rc != 0
+    issued = [" ".join(str(a) for a in c[0]) for c in runner.calls]
+    assert not any("gh repo create" in c for c in issued)  # no remote side-effect
+
+
+def test_create_rejects_invalid_package_name(tmp_path, monkeypatch, capsys):
+    """A repo name that derives an invalid Python identifier fails fast."""
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    # "2fa.tool" -> pkg "2fa.tool": not a valid identifier (dot + leading digit).
+    rc = main(["create", "--agent", "2fa.tool", "--desc", "bad name"])
+    assert rc != 0
+    err = capsys.readouterr().err
+    assert "invalid Python package name" in err
+
+
 # ---------------------------------------------------------------------------
 # Transform is invoked on the cloned tree
 # ---------------------------------------------------------------------------
