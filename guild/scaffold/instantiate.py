@@ -289,11 +289,11 @@ def _is_block_start(line: str) -> bool:
     stripped = line.lstrip()
     if not stripped:
         return False
-    if stripped.startswith("```") or stripped.startswith("~~~"):
+    if stripped.startswith(("```", "~~~")):
         return True
     if stripped[0] in "#>":
         return True
-    if stripped.startswith("![") or stripped.startswith("["):
+    if stripped.startswith(("![", "[")):
         return True
     if stripped[:2] in ("- ", "* ", "+ "):
         return True
