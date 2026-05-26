@@ -7,6 +7,18 @@
 # e.g. the agent-config skill / `guild show <suffix>` (suffix mode).
 culture_server_yaml: ~/.culture/server.yaml
 
+# Workspace directory: the parent folder containing guildmaster and all sibling
+# agent/skill repos. Used by `guild create` and `guild overview --scope mesh`
+# to determine where to clone new sibling repos and to discover agents in the
+# workspace filesystem (via */culture.yaml discovery). Default: the parent of
+# this guildmaster repo (repo_root.parent). Can be overridden on the CLI via
+# `--workspace-root` or set here to a workspace-relative or absolute path.
+# Examples:
+#   workspace_root: ..                   # Relative: parent of this repo (default)
+#   workspace_root: ~/workspace/agents   # Absolute: with tilde expansion
+# Leave commented to use the default (this repo's parent).
+# workspace_root: ..
+
 # Sibling project paths checked by cross-repo skills (cicd alignment delta,
 # communicate). Workspace-relative paths (../foo) are preferred. Skills skip
 # entries that don't exist on disk, so commenting out missing ones isn't
