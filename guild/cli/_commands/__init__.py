@@ -33,6 +33,10 @@ VERBS: dict[str, str] = {
         "Show one agent's full config in a read-only view — its prompt file, "
         "culture.yaml, and skills index. Path or registered suffix."
     ),
+    "create": (
+        "Provision a brand-new sibling repo: scaffold manifest + canonical skill "
+        "kit + identity + ledger registration. Dry-run by default; --apply executes."
+    ),
 }
 
 __all__ = ["VERBS"]
