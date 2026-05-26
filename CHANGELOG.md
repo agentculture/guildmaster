@@ -22,8 +22,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`guild create` README rewrite**: `_set_readme_intro` only replaced the first
   line of the template's intro, leaving a dangling fragment when the intro spans
   multiple lines (as the real `culture-agent-template` intro does). It now
-  replaces the whole first paragraph. Both bugs surfaced provisioning `agenda`;
-  regression tests added.
+  replaces the whole first paragraph, stopping at a blank line **or** the start
+  of a new markdown block (heading / list / blockquote / badge / code fence) so
+  a block that immediately follows the intro is never silently dropped, while
+  wrapped inline-code prose (a single leading backtick) is still consumed. Both
+  bugs surfaced provisioning `agenda`; regression tests added.
 
 ## [0.6.0] - 2026-05-26
 

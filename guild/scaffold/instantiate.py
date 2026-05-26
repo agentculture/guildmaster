@@ -272,6 +272,34 @@ def _is_desc_stub(line: str) -> bool:
     return not re.match(r"^[#>`\-\*!\[]", stripped)
 
 
+def _is_block_start(line: str) -> bool:
+    """Return True if *line* begins a new markdown block.
+
+    Used to bound intro-paragraph consumption in ``_replace_heading_block`` so a
+    block that immediately follows the intro *without* a blank line (e.g. ``##
+    Section``, a list, or a badge row) is not swallowed.  Recognised starts:
+    ATX headings (``#``), blockquotes (``>``), unordered list items
+    (``- ``/``* ``/``+ ``), links/badges (``[`` / ``![``), and fenced code
+    (```` ``` ```` / ``~~~``).
+
+    A *single* leading backtick is **not** a block start — it is inline code in
+    wrapped prose (e.g. ``` `culture.yaml`, and you have… ```), which is part of
+    the intro paragraph and must be consumed with it.
+    """
+    stripped = line.lstrip()
+    if not stripped:
+        return False
+    if stripped.startswith("```") or stripped.startswith("~~~"):
+        return True
+    if stripped[0] in "#>":
+        return True
+    if stripped.startswith("![") or stripped.startswith("["):
+        return True
+    if stripped[:2] in ("- ", "* ", "+ "):
+        return True
+    return False
+
+
 def _replace_heading_block(lines: list[str], i: int, bare: str, desc: str) -> tuple[list[str], int]:
     """Replace the heading at *lines[i]* and its following description stub.
 
@@ -290,11 +318,13 @@ def _replace_heading_block(lines: list[str], i: int, bare: str, desc: str) -> tu
     if i < len(lines) and _is_desc_stub(lines[i]):
         out.append(desc + "\n")
         i += 1
-        # Consume the rest of the intro paragraph (consecutive non-blank lines)
-        # so a *multi-line* template intro is replaced wholesale rather than
-        # leaving a dangling fragment.  The stub check on the first line already
-        # confirmed this is prose, not a badge block / list / code fence.
-        while i < len(lines) and lines[i].strip() != "":
+        # Consume the rest of the intro paragraph so a *multi-line* template
+        # intro is replaced wholesale rather than leaving a dangling fragment.
+        # Stop at a blank line (paragraph end) OR the start of a new markdown
+        # block (heading/list/blockquote/badge/fence) — even when no blank line
+        # separates it — so a following block is never silently dropped.  A
+        # single leading backtick stays consumable (wrapped inline-code prose).
+        while i < len(lines) and lines[i].strip() != "" and not _is_block_start(lines[i]):
             i += 1
     elif i < len(lines):
         out.append(desc + "\n\n")
