@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-26
+
+### Added
+
+- **`guild create` — template-instantiate a new sibling repo.** Provisions a
+  brand-new AgentCulture sibling by instantiating
+  `agentculture/culture-agent-template` (overridable via `--template`),
+  renaming identifiers throughout the clone (`culture_agent_template` → pkg,
+  `culture-agent-template` → repo token), writing a self-init CLAUDE.md seed
+  (carries a `/init` re-init instruction; satisfies `steward doctor`
+  prompt-file-present + backend-consistency invariants), configuring the GitHub
+  repo via `configure-repo.sh`, pushing the genesis commit, and registering the
+  agent in `docs/skill-sources.md` (idempotent). Dry-run by default; `--apply`
+  executes. `--json` emits a structured payload on both paths.
+  - `guild/scaffold/instantiate.py` — the **pure** transform: `rename_map`,
+    `transform_plan` (dry-run description), `transform_clone` (in-place);
+    no network, no subprocess, fully unit-testable against a fixture dir.
+  - `guild/cli/_commands/_provision_template.py` — injectable-runner executor
+    with `preflight` (fail-fast: auth, existence, empty dest) and `apply`
+    (gh→clone→transform→configure→commit→push).
+  - `guild/cli/_commands/create.py` — CLI verb wiring argparse → plan → render
+    | apply.
+  - `.claude/skills/guild/scripts/create.sh` — thin wrapper (mirrors
+    `overview.sh`).
+  - 39 new tests covering: transform correctness, package-dir rename,
+    identifier replacement everywhere, CLAUDE.md seed shape, dry-run
+    external-free guarantee, `--apply` command sequence, fail-fast on existing
+    repo / no auth / non-empty dest, ledger idempotency.
+
 ## [0.5.0] - 2026-05-24
 
 ### Changed

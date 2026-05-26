@@ -25,6 +25,11 @@ VERBS: dict[str, str] = {
         "Onboard a new sibling: the full canonical kit + identity-setup section "
         "+ ledger registration + verification record. Dry-run by default."
     ),
+    "create": (
+        "Provision a brand-new sibling repo by instantiating the GitHub template "
+        "agentculture/culture-agent-template, customising it for the new agent, "
+        "and registering it in the ledger. Dry-run by default; --apply executes."
+    ),
     "overview": (
         "Skills-supplier overview — the canonical skill set + versions, the "
         "ledger view, and drift signals. Read-only; --scope all / self."
