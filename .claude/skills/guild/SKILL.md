@@ -1,35 +1,36 @@
 ---
 name: guild
 description: >
-  Run guildmaster's skills-supplier overview and narrate it. Run `guild
-  overview` (via scripts/overview.sh) for the deterministic evidence pack — the
-  canonical skill set + versions/origins, the docs/skill-sources.md ledger, and
-  skills-scoped drift signals — then narrate three separated layers: observed
-  facts, inferred relationships, and suggestions (each naming the command that
-  enacts it). Use when an operator asks "what skills do we supply", "who
-  consumes what", "is anything drifting", or "what should I teach next".
-  Skills-scoped and reflect-only — it surfaces and interprets supplier-side
-  skill/version signals; it does NOT narrate the agent relationship graph or
+  Run guildmaster's supplier surfaces — overview, show, and create (provision).
+  Overview (scripts/overview.sh) emits the canonical skill set, versions/origins,
+  docs/skill-sources.md ledger, and drift signals for narration. Show
+  (scripts/show.sh) displays one agent's config. Create (scripts/create.sh)
+  invokes the provisioning surface: build a dry-run plan for a new repo, or
+  --apply to execute (GitHub repo creation, clone, kit+identity, push, ledger
+  registration). Use when an operator asks "what skills do we supply",
+  "who consumes what", "is anything drifting", "what should I teach next",
+  "show me agent X's config", or "spin up a new sibling <owner/repo> called
+  <description>". Skills-scoped supplier operations (reflect-only for overview,
+  provision-only for create) — does NOT narrate the agent relationship graph or
   judge alignment (that stays with steward's org-overview / steward doctor).
-  The skills-scoped excerpt of steward's `org-overview` narration contract
-  (cite-don't-import, issue #12).
 type: command
 ---
 
-# guild — narrate guildmaster's own supplier surfaces
+# guild — guildmaster's supplier surfaces (overview, show, create)
 
-guildmaster is the mesh's skills **supplier**, and it owns the *inventory*
-surfaces ([issue #12](https://github.com/agentculture/guildmaster/issues/12)).
-The per-agent half (`guild show`) is backed by the vendored `agent-config`
-skill. **This skill is the supplier half: the affordance for `guild overview`.**
-It houses the scripts that run guildmaster's own read-only CLI surfaces and the
-contract for narrating them — `overview` is the one script today.
+guildmaster is the mesh's skills **supplier**, and it owns the *inventory* and
+**provisioning** surfaces ([issue #12](https://github.com/agentculture/guildmaster/issues/12)).
+**This skill houses the CLI wrappers and narration contracts for all of
+guildmaster's own verbs: `overview`, `show`, and `create`.**
 
-Unlike the vendored skills, this one is **guildmaster's own** (origin =
-`guildmaster`, not cited from steward): `guild overview` is a pure-Python,
-read-only CLI verb, and `scripts/overview.sh` is the thin deterministic wrapper
-that invokes it. The script picks how to call `guild` (installed console
-script → `uv run` → `python -m guild`) and delegates; it interprets nothing.
+Unlike the vendored skills, these are **guildmaster's own** (origin =
+`guildmaster`, not cited from steward): `guild overview`, `guild show`, and
+`guild create` are Python CLI verbs (read-only, read+provision, and
+provision-only respectively), and each script is a deterministic wrapper that
+invokes the verb and interprets its output (for overview narration) or nothing
+(for show/create). The scripts pick how to call `guild` (installed console
+script → `uv run` → `python -m guild`) and delegate; they do not interpret or
+mutate.
 
 **The load-bearing split** (this is the skills-scoped excerpt of steward's
 `org-overview` narration contract — issue #12, cite-don't-import):
@@ -41,7 +42,9 @@ script → `uv run` → `python -m guild`) and delegates; it interprets nothing.
   inferred relationships and suggestions. **Never present an inference as a
   fact**, and keep the layers in separate sections.
 
-## What `overview` answers
+## guildmaster's three supplier verbs
+
+### `overview` — narrate the skill supply
 
 A skills-scoped evidence pack — **not** `steward overview`'s ecosystem
 relationship graph (issue #12: inventory → guildmaster; judgment → steward):
@@ -128,6 +131,41 @@ supplier lane:
 | `agent_gaps` (per-agent missing skill) | a consumer behind / missing a skill | `guild teach --skill <name> --to <agent>` to close the gap |
 | agent not registered in the ledger | a sibling not yet onboarded | `guild onboard --agent <owner/repo>` |
 | consumer behind the canonical pin (post-cutover) | a team on an outdated procedure | Re-vendor: `guild teach` / `onboard` to the current pin |
+
+### `create` — provision a brand-new sibling
+
+Stand up a brand-new AgentCulture sibling agent **end-to-end from one request**:
+no manual scaffold, no issue round-trip. A single `guild create` call composes
+six sub-actions (all atomic, behind `--apply`):
+
+1. Creates a public, MIT-licensed GitHub repo with the `--desc` description.
+2. Clones it into the workspace.
+3. Vendors the full canonical skill kit directly into `.claude/skills/`.
+4. Writes a self-initializing `CLAUDE.md` (which carries `--desc` and instructs
+   the new agent to `/init` to customize its own prompt) + `culture.yaml`
+   identity + `skills.local.yaml.example`.
+5. Commits and pushes the genesis commit to `main`.
+6. Registers the new agent in `docs/skill-sources.md` (idempotent).
+
+**Dry-run by default; `--apply` executes the irreversible acts.** Dry-run
+renders the ProvisionPlan (human-readable and `--json`), performs zero network
+calls, and performs zero file writes outside `.devague/`. Usage:
+
+```bash
+# Dry-run: see what would be created
+.claude/skills/guild/scripts/create.sh --agent agentculture/appsec --desc "Application-security sibling agent"
+
+# Execute (requires GitHub auth): create repo, clone, vendor, write, push, register
+.claude/skills/guild/scripts/create.sh --agent agentculture/appsec --desc "..." --apply
+
+# Machine-readable plan
+.claude/skills/guild/scripts/create.sh --agent agentculture/appsec --desc "..." --json
+```
+
+**Distinct from `onboard`**: `onboard` targets repos that already exist (a brief
+to their own agent to implement skill intake); `create` is for repos guildmaster
+provisions directly. Pre-check fails if the target repo already exists on GitHub
+or in the workspace.
 
 ### Out of scope — steward's lane
 

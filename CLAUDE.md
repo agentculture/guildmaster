@@ -85,18 +85,26 @@ CHANGELOG.md                # Keep-a-Changelog
 to dry-run; `--apply` commits** — agents call CLIs in loops, so safe-by-default
 is mandatory.
 
-**Supplier verbs — `teach` & `onboard` (the broadcast surface).** As the mesh's
-skills supplier, guildmaster propagates skills through two write verbs:
+**Supplier verbs — `teach`, `onboard`, & `create` (the broadcast & provisioning surface).** As the mesh's
+skills supplier, guildmaster propagates skills and provisions new agents through three write verbs:
 
 - `guild teach --skill <name> … --to <agent> …` — teach a **set** of skills to a
   **set** of agents.
-- `guild onboard --agent <owner/repo>` — onboard a **new** sibling: the full
-  canonical kit + an identity-setup section + ledger registration + a
-  verification record.
+- `guild onboard --agent <owner/repo>` — onboard a **new** sibling that already
+  exists on GitHub: the full canonical kit + an identity-setup section + ledger
+  registration + a verification record. Issues a brief to the target's own agent.
+- `guild create --agent <owner/repo> --desc <description> [--apply]` — **stand up
+  a brand-new sibling end-to-end** without manual scaffold: creates the public,
+  MIT-licensed GitHub repo with the description, clones it into the workspace,
+  vendors the full canonical skill kit directly into `.claude/skills/`, writes a
+  self-initializing `CLAUDE.md` seed (which instructs the new agent to `/init` to
+  customize its prompt) + `culture.yaml` identity, pushes the genesis commit to
+  `main`, and registers the new agent in `docs/skill-sources.md`. Dry-run by
+  default; `--apply` performs the irreversible acts (repo creation, clone, push).
 
-They are **agent-major**: one issue per target agent, bundling a per-skill
-*section* for each skill that agent receives — *not* one issue per skill.
-New-vs-resync framing is auto-detected per `(skill, agent)` from
+`teach` and `onboard` are **agent-major**: one issue per target agent, bundling
+a per-skill *section* for each skill that agent receives — *not* one issue per
+skill. New-vs-resync framing is auto-detected per `(skill, agent)` from
 `docs/skill-sources.md`; skills must be selected explicitly (`--skill` /
 `--all`, no implicit default). `teach` is the single render+post engine and
 `onboard` composes it (`onboard X` ≡ `teach <all-canonical> --new --to X` +
@@ -105,6 +113,10 @@ ledger + identity + verification). **These supersede a separate
 asked for one; guildmaster fulfills the broadcast *role* via these two instead).
 Going live is gated on the steward→guildmaster cutover (`docs/cutover.md`) — no
 two live broadcasters.
+
+**`create` is DISTINCT from `onboard`**: `onboard` is for repos that already
+exist (a brief to their own agent); `create` is for repos guildmaster provisions
+directly (zero hand-built scaffold, no second round-trip).
 
 **Inventory verbs — `overview` & `show` (the read-only surfaces).** guildmaster
 owns the mesh's *inventory* surfaces per
