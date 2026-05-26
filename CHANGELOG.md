@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-05-26
+
+### Added
+
+- **Registered `dominion-breaker`** (`agentculture/dominion-breaker`) in
+  `docs/skill-sources.md` as a downstream consumer of the canonical kit —
+  provisioned via `guild create --apply` from `culture-agent-template`. It is an
+  agentic CLI for cited monolith decomposition (originating brief:
+  [#31](https://github.com/agentculture/guildmaster/issues/31)).
+
 ## [0.6.1] - 2026-05-26
 
 ### Added
