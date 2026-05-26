@@ -301,6 +301,12 @@ def test_create_apply_full_command_sequence(tmp_path, monkeypatch, capsys):
     assert any("git" in c and "commit" in c for c in issued)
     assert any("git" in c and "push" in c for c in issued)
 
+    # Regression: the genesis push MUST come before configure-repo.sh applies the
+    # "Protect main" ruleset (which requires PRs) — else the push is rejected.
+    push_idx = next(i for i, c in enumerate(issued) if "git" in c and "push" in c)
+    cfg_idx = next(i for i, c in enumerate(issued) if "configure-repo.sh" in c)
+    assert push_idx < cfg_idx, f"push must precede configure-repo.sh; got {issued}"
+
 
 def test_create_apply_json_result(tmp_path, monkeypatch, capsys):
     root = _seed(tmp_path)

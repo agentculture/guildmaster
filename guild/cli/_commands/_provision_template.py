@@ -20,11 +20,12 @@ Sequence (``--apply``)
    ``  --description <desc>``
 3. ``git clone https://github.com/<agent>.git <clone_dest>``
 4. transform_clone(<clone_dest>, bare, desc, backend) (pure, local, no runner)
-5. ``bash .claude/skills/guild/scripts/configure-repo.sh <agent> --apply``
-   (resolved from guildmaster's repo root)
-6. ``git -C <clone_dest> add -A``
-7. ``git -C <clone_dest> commit -m "scaffold <bare> from culture-agent-template"``
-8. ``git -C <clone_dest> push origin HEAD:main``
+5. ``git -C <clone_dest> add -A``
+6. ``git -C <clone_dest> commit -m "scaffold <bare> from culture-agent-template"``
+7. ``git -C <clone_dest> push origin HEAD:main``    (genesis — BEFORE the branch lock)
+8. ``bash .claude/skills/guild/scripts/configure-repo.sh <agent> --apply``
+   (resolved from guildmaster's repo root; LAST, because its "Protect main"
+   ruleset requires PRs and would otherwise reject the genesis push)
 
 Preflight guard
 ---------------
@@ -262,17 +263,11 @@ def apply(
     # Step 4 — pure transform (no runner needed).
     transform_clone(clone_dest, bare, desc, backend)
 
-    # Step 5 — configure-repo.sh (GitHub settings: branch protection, environments, etc.)
-    configure_script = guildmaster_root / CONFIGURE_REPO_SCRIPT
-    if configure_script.is_file():
-        cfg = runner([_BASH, str(configure_script), agent, "--apply"])
-        _check(cfg, f"configure-repo.sh {agent} failed", EXIT_ENV_ERROR)
-
-    # Step 6 — stage everything.
+    # Step 5 — stage everything.
     add = runner(["git", "-C", str(clone_dest), "add", "-A"])
     _check(add, "git add failed", EXIT_ENV_ERROR)
 
-    # Step 7 — commit.
+    # Step 6 — commit.
     commit = runner(
         [
             "git",
@@ -285,9 +280,16 @@ def apply(
     )
     _check(commit, "git commit (scaffold) failed", EXIT_ENV_ERROR)
 
-    # Step 8 — push.
+    # Step 7 — push the genesis scaffold to main BEFORE the branch is locked.
     push = runner(["git", "-C", str(clone_dest), "push", "origin", "HEAD:main"])
     _check(push, "git push origin HEAD:main failed", EXIT_ENV_ERROR)
+
+    # Step 8 — configure-repo.sh LAST: its "Protect main" ruleset requires PRs,
+    # so applying it before the genesis push would get that push rejected.
+    configure_script = guildmaster_root / CONFIGURE_REPO_SCRIPT
+    if configure_script.is_file():
+        cfg = runner([_BASH, str(configure_script), agent, "--apply"])
+        _check(cfg, f"configure-repo.sh {agent} failed", EXIT_ENV_ERROR)
 
     return {
         "repo": agent,
