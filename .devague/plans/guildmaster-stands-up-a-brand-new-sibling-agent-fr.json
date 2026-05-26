@@ -1,0 +1,308 @@
+{
+  "slug": "guildmaster-stands-up-a-brand-new-sibling-agent-fr",
+  "title": "guildmaster stands up a brand-new sibling agent from one request: a single command creates the public, MIT-licensed, Python repo on GitHub, clones it into the workspace, vendors the full canonical skill kit directly into .claude/skills/, writes a valid CLAUDE.md + culture.yaml identity, and registers it in the ledger \u2014 no hand-built scaffold, no issue round-trip",
+  "frame_slug": "guildmaster-stands-up-a-brand-new-sibling-agent-fr",
+  "schema_version": 1,
+  "status": "exported",
+  "created": "2026-05-26T04:58:10Z",
+  "updated": "2026-05-26T05:54:53Z",
+  "targets": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "guildmaster stands up a brand-new sibling agent from one request: a single command creates the public, MIT-licensed, Python repo on GitHub, clones it into the workspace, vendors the full canonical skill kit directly into .claude/skills/, writes a valid CLAUDE.md + culture.yaml identity, and registers it in the ledger \u2014 no hand-built scaffold, no issue round-trip"
+    },
+    {
+      "id": "h1",
+      "kind": "honesty",
+      "text": "an end-to-end --apply run produces a clone that passes 'steward doctor --scope self <clone>' with zero failures"
+    },
+    {
+      "id": "c2",
+      "kind": "audience",
+      "text": "AgentCulture supplier operators (the human operator + the guildmaster agent acting for them) standing up new sibling repos that guildmaster's GitHub account can directly create and write"
+    },
+    {
+      "id": "h6",
+      "kind": "honesty",
+      "text": "the verb needs only credentials guildmaster already holds (a gh login that can create repos in the target org) \u2014 no new auth surface; if it can't create the repo it fails fast with a clear error, not a half-built scaffold"
+    },
+    {
+      "id": "c3",
+      "kind": "after_state",
+      "text": "one command turns a {name, description} request into a fully-scaffolded, skills-equipped sibling: a public MIT Python repo on GitHub + a local clone in the workspace, kit copied in, identity files written, ledger updated \u2014 ready for that agent's own resident agent to take over its domain logic"
+    },
+    {
+      "id": "h7",
+      "kind": "honesty",
+      "text": "after --apply the new agent's resident agent starts with zero manual kit/identity setup: the repo already builds, tests pass, and steward doctor is green"
+    },
+    {
+      "id": "c4",
+      "kind": "before_state",
+      "text": "new siblings are hand-built today (the appsec agent was scaffolded manually on an onboarding/sibling-scaffold branch) or onboarded via a GitHub-issue brief the target's OWN agent must implement; there is no one-shot path where guildmaster itself provisions the repo"
+    },
+    {
+      "id": "h8",
+      "kind": "honesty",
+      "text": "the manual appsec scaffold (the onboarding/sibling-scaffold branch) is reproducible by the verb \u2014 every step done by hand there maps to something the verb does automatically"
+    },
+    {
+      "id": "c5",
+      "kind": "why_it_matters",
+      "text": "provisioning siblings IS guildmaster's supplier job; doing it by hand is slow, drifts from the canonical kit, and doesn't reliably pass steward doctor. A reproducible one-shot makes the supplier role real and the kit consistent from birth"
+    },
+    {
+      "id": "h9",
+      "kind": "honesty",
+      "text": "two siblings created by the verb get byte-identical kit + structurally-identical identity files (no per-run drift) \u2014 reproducibility is observable, not asserted"
+    },
+    {
+      "id": "c6",
+      "kind": "boundary",
+      "text": "scaffolds AgentCulture siblings only \u2014 the canonical kit + identity, not arbitrary Python apps; does NOT replace the issue-based onboard for repos guildmaster can't directly write; does NOT author the new agent's domain logic"
+    },
+    {
+      "id": "h10",
+      "kind": "honesty",
+      "text": "the verb refuses / no-ops on a target that already exists or is outside the AgentCulture-sibling shape, rather than scaffolding arbitrary content into it"
+    },
+    {
+      "id": "c7",
+      "kind": "success_signal",
+      "text": "running the verb --apply against agentculture/appsec yields: repo exists on GitHub (public, MIT, description set), local clone in workspace, full canonical kit under .claude/skills/, a CLAUDE.md + culture.yaml that pass 'steward doctor --scope self', and an updated docs/skill-sources.md ledger entry \u2014 reproducing/superseding the manual appsec scaffold"
+    },
+    {
+      "id": "h11",
+      "kind": "honesty",
+      "text": "the appsec acceptance check is automatable: a test asserts repo-exists + license==MIT + description-set + kit-complete + steward-doctor-green for a scratch target run"
+    },
+    {
+      "id": "c8",
+      "kind": "requirement",
+      "text": "safe-by-default: dry-run renders exactly what it WOULD do (repo spec, file manifest, generated CLAUDE.md/culture.yaml, ledger diff) and touches nothing external; --apply performs the irreversible acts (gh repo create, git clone, file writes, ledger commit)"
+    },
+    {
+      "id": "h2",
+      "kind": "honesty",
+      "text": "in dry-run, zero gh/git network calls and zero file writes happen outside .devague \u2014 verifiable by running dry-run with no network"
+    },
+    {
+      "id": "c9",
+      "kind": "requirement",
+      "text": "the local clone lands in the workspace root (guildmaster's parent dir), resolved PORTABLY via skills.local.yaml / --workspace-root \u2014 never a hardcoded home path (steward doctor portability invariant)"
+    },
+    {
+      "id": "h3",
+      "kind": "honesty",
+      "text": "no tracked file or generated output holds an absolute home path; the clone dir resolves from config/flag, falling back to the guildmaster repo's parent"
+    },
+    {
+      "id": "c10",
+      "kind": "requirement",
+      "text": "the skill kit is COPIED directly into the new repo's .claude/skills/ (file copy of each canonical skill dir, inbound-origin attribution preserved), not rendered as a GitHub issue"
+    },
+    {
+      "id": "h4",
+      "kind": "honesty",
+      "text": "each .claude/skills/<name>/ dir in the new repo is content-identical to guildmaster's canonical copy (minus git-ignored local files); inbound skills keep origin attribution"
+    },
+    {
+      "id": "c11",
+      "kind": "requirement",
+      "text": "generated identity files (CLAUDE.md, culture.yaml, skills.local.yaml.example) must satisfy steward doctor's prompt-file-present, backend-consistency, skills-convention and portability invariants on first run"
+    },
+    {
+      "id": "h5",
+      "kind": "honesty",
+      "text": "steward doctor --scope self on the fresh clone reports prompt-file-present, backend-consistency, skills-convention, and portability all green"
+    },
+    {
+      "id": "c15",
+      "kind": "requirement",
+      "text": "the CLAUDE.md guildmaster writes is a self-initializing SEED, not a final runtime prompt: it carries the agent's --desc and an explicit instruction for the new agent to re-init its own CLAUDE.md from that description + the scaffolded repo (an /init-style bootstrap). guildmaster scaffolds the prompt frame + identity; the agent fills in its domain. The seed must still pass steward doctor (prompt-file-present + backend-consistency)"
+    },
+    {
+      "id": "h12",
+      "kind": "honesty",
+      "text": "a freshly-created repo's CLAUDE.md (a) names the agent and embeds its --desc, (b) carries an explicit, actionable re-init instruction, and (c) passes steward doctor prompt-file-present + backend-consistency BEFORE any re-init is run"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "summary": "Scaffold manifest engine: pure afi-cli skeleton file map",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild/scaffold/manifest.build(agent, desc, backend) returns a relpath->content map containing pyproject.toml, <pkg>/__init__.py, <pkg>/__main__.py, <pkg>/cli/__init__.py, tests/test_cli_chassis.py, .github/workflows/tests.yml, .github/workflows/publish.yml, CHANGELOG.md, README.md, and an MIT LICENSE",
+        "a test writes the manifest to a tmp dir, runs the generated test, and it passes with zero manual edits (the scaffold builds + self-tests green)"
+      ],
+      "deps": [],
+      "covers": [
+        "c3",
+        "h7"
+      ]
+    },
+    {
+      "id": "t2",
+      "summary": "Kit-copy planner: content-identical canonical-skill dirs",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild/scaffold/kit.copy_plan(root) returns a src->dest map covering every canonical skill (iter_skills minus SELF_SKILLS) under .claude/skills/<name>/",
+        "a test asserts each copied dir is byte-identical to guildmaster's copy (excluding git-ignored skills.local.yaml) and that inbound skills (devague trio) retain their origin attribution"
+      ],
+      "deps": [],
+      "covers": [
+        "c10",
+        "h4"
+      ]
+    },
+    {
+      "id": "t3",
+      "summary": "Identity generator: CLAUDE.md self-init seed + culture.yaml + skills.local.yaml.example",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild/scaffold/identity.build(agent, desc, backend) returns CLAUDE.md, culture.yaml, and skills.local.yaml.example contents",
+        "a test asserts the CLAUDE.md embeds desc, names the agent, and carries an explicit /init-style re-init instruction (h12 a+b); culture.yaml backend matches the prompt file (backend-consistency); no generated file contains an absolute home path"
+      ],
+      "deps": [],
+      "covers": [
+        "c11",
+        "c15",
+        "h5",
+        "h12"
+      ]
+    },
+    {
+      "id": "t4",
+      "summary": "Portable workspace-root resolution",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild/scaffold/workspace.resolve(repo_root, flag, local_cfg) returns --workspace-root if set, else skills.local.yaml's workspace_root key, else repo_root.parent; skills.local.yaml.example documents the workspace_root key",
+        "a test exercises all three precedence branches and asserts no hardcoded home path is ever returned or embedded"
+      ],
+      "deps": [],
+      "covers": [
+        "c9",
+        "h3"
+      ]
+    },
+    {
+      "id": "t5",
+      "summary": "Dry-run ProvisionPlan: compose manifest+kit+identity+ledger-diff, zero external",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild/scaffold/plan.build(agent, desc, backend, root, workspace_root) composes manifest+kit+identity+ledger-diff into a ProvisionPlan dataclass and renders it (human + --json)",
+        "a test asserts building and rendering the dry-run plan performs zero subprocess calls, zero network, and zero file writes outside .devague"
+      ],
+      "deps": [
+        "t1",
+        "t2",
+        "t3",
+        "t4"
+      ],
+      "covers": [
+        "c8",
+        "h2"
+      ]
+    },
+    {
+      "id": "t6",
+      "summary": "External-acts executor + boundary guard (the --apply side)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild/cli/_commands/_provision.apply(plan, runner) runs gh-repo-create(public, MIT, description) -> clone into workspace root -> write manifest -> git add/commit -> git push main, behind an injectable runner",
+        "it pre-checks the target does not already exist and raises a typed error with no partial scaffold when it does, or when gh auth is missing; only credentials guildmaster already holds are used",
+        "a test drives a fake runner and asserts the exact command sequence plus the fail-fast-on-existing-target behavior, with no real network"
+      ],
+      "deps": [
+        "t5"
+      ],
+      "covers": [
+        "c2",
+        "h6",
+        "c6",
+        "h10"
+      ]
+    },
+    {
+      "id": "t7",
+      "summary": "guild create command: dry-run default, --apply, ledger registration",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guild create --agent X --desc D defaults to dry-run (renders the ProvisionPlan, exit 0, nothing external); --apply runs the executor then registers X in docs/skill-sources.md idempotently; --json emits a structured payload",
+        "create is registered in the argparse subcommand table; tests cover dry-run-default, --apply happy path (fake runner), and ledger idempotency"
+      ],
+      "deps": [
+        "t5",
+        "t6"
+      ],
+      "covers": [
+        "c1"
+      ]
+    },
+    {
+      "id": "t8",
+      "summary": "appsec end-to-end acceptance test (the success signal)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "tests/test_create_appsec_acceptance.py runs guild create --agent agentculture/appsec --apply against a sandboxed runner and asserts: repo-create called public+MIT+description, clone present, kit content-identical, identity passes the four steward-doctor invariants (real steward doctor if available, else structural checks), ledger updated",
+        "a second create for a different agent yields byte-identical kit + identity differing only in agent/desc (reproducibility observable); each assertion is labelled with the target (h1/h4/h5/h8/h9/h11) it validates"
+      ],
+      "deps": [
+        "t7"
+      ],
+      "covers": [
+        "h1",
+        "c4",
+        "h8",
+        "c5",
+        "h9",
+        "c7",
+        "h11"
+      ]
+    },
+    {
+      "id": "t9",
+      "summary": "Docs + guild skill + SELF_SKILLS + version bump",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "guildmaster CLAUDE.md documents guild create under Project shape; the guild skill SKILL.md documents the create surface (single-umbrella-skill convention); create added to SELF_SKILLS",
+        "version-bump run + CHANGELOG entry added (version-check CI passes); markdownlint-cli2 passes on changed .md files"
+      ],
+      "deps": [
+        "t7"
+      ],
+      "covers": []
+    }
+  ],
+  "risks": [
+    {
+      "id": "r1",
+      "text": "gh repo create --license MIT seeds an initial commit (LICENSE); reconcile with 'push genesis to main' \u2014 either create empty + author LICENSE in the manifest, or clone gh's init and commit the scaffold on top",
+      "kind": "unknown_nonblocking",
+      "task_id": "t6"
+    },
+    {
+      "id": "r2",
+      "text": "apply-path tests must sandbox gh/git (injected runner or a local bare remote) so CI needs no real GitHub credentials",
+      "kind": "unknown_nonblocking",
+      "task_id": "t6"
+    },
+    {
+      "id": "r3",
+      "text": "steward may not be installed in CI; h1/h5 doctor assertions must run real 'steward doctor' if available, else fall back to structural invariant checks \u2014 no hard dependency on a steward checkout",
+      "kind": "unknown_nonblocking",
+      "task_id": "t8"
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "slug": "guildmaster-stands-up-a-brand-new-sibling-agent-fr",
+  "title": "guildmaster stands up a brand-new sibling agent from one request: a single command creates the public, MIT-licensed, Python repo on GitHub, clones it into the workspace, vendors the full canonical skill kit directly into .claude/skills/, writes a valid CLAUDE.md + culture.yaml identity, and registers it in the ledger \u2014 no hand-built scaffold, no issue round-trip",
+  "schema_version": 1,
+  "status": "exported",
+  "created": "2026-05-26T04:30:10Z",
+  "updated": "2026-05-26T04:54:45Z",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "guildmaster stands up a brand-new sibling agent from one request: a single command creates the public, MIT-licensed, Python repo on GitHub, clones it into the workspace, vendors the full canonical skill kit directly into .claude/skills/, writes a valid CLAUDE.md + culture.yaml identity, and registers it in the ledger \u2014 no hand-built scaffold, no issue round-trip",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h1",
+          "text": "an end-to-end --apply run produces a clone that passes 'steward doctor --scope self <clone>' with zero failures",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c2",
+      "kind": "audience",
+      "text": "AgentCulture supplier operators (the human operator + the guildmaster agent acting for them) standing up new sibling repos that guildmaster's GitHub account can directly create and write",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h6",
+          "text": "the verb needs only credentials guildmaster already holds (a gh login that can create repos in the target org) \u2014 no new auth surface; if it can't create the repo it fails fast with a clear error, not a half-built scaffold",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c3",
+      "kind": "after_state",
+      "text": "one command turns a {name, description} request into a fully-scaffolded, skills-equipped sibling: a public MIT Python repo on GitHub + a local clone in the workspace, kit copied in, identity files written, ledger updated \u2014 ready for that agent's own resident agent to take over its domain logic",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h7",
+          "text": "after --apply the new agent's resident agent starts with zero manual kit/identity setup: the repo already builds, tests pass, and steward doctor is green",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c4",
+      "kind": "before_state",
+      "text": "new siblings are hand-built today (the appsec agent was scaffolded manually on an onboarding/sibling-scaffold branch) or onboarded via a GitHub-issue brief the target's OWN agent must implement; there is no one-shot path where guildmaster itself provisions the repo",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h8",
+          "text": "the manual appsec scaffold (the onboarding/sibling-scaffold branch) is reproducible by the verb \u2014 every step done by hand there maps to something the verb does automatically",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c5",
+      "kind": "why_it_matters",
+      "text": "provisioning siblings IS guildmaster's supplier job; doing it by hand is slow, drifts from the canonical kit, and doesn't reliably pass steward doctor. A reproducible one-shot makes the supplier role real and the kit consistent from birth",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h9",
+          "text": "two siblings created by the verb get byte-identical kit + structurally-identical identity files (no per-run drift) \u2014 reproducibility is observable, not asserted",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c6",
+      "kind": "boundary",
+      "text": "scaffolds AgentCulture siblings only \u2014 the canonical kit + identity, not arbitrary Python apps; does NOT replace the issue-based onboard for repos guildmaster can't directly write; does NOT author the new agent's domain logic",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h10",
+          "text": "the verb refuses / no-ops on a target that already exists or is outside the AgentCulture-sibling shape, rather than scaffolding arbitrary content into it",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c7",
+      "kind": "success_signal",
+      "text": "running the verb --apply against agentculture/appsec yields: repo exists on GitHub (public, MIT, description set), local clone in workspace, full canonical kit under .claude/skills/, a CLAUDE.md + culture.yaml that pass 'steward doctor --scope self', and an updated docs/skill-sources.md ledger entry \u2014 reproducing/superseding the manual appsec scaffold",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h11",
+          "text": "the appsec acceptance check is automatable: a test asserts repo-exists + license==MIT + description-set + kit-complete + steward-doctor-green for a scratch target run",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c8",
+      "kind": "requirement",
+      "text": "safe-by-default: dry-run renders exactly what it WOULD do (repo spec, file manifest, generated CLAUDE.md/culture.yaml, ledger diff) and touches nothing external; --apply performs the irreversible acts (gh repo create, git clone, file writes, ledger commit)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h2",
+          "text": "in dry-run, zero gh/git network calls and zero file writes happen outside .devague \u2014 verifiable by running dry-run with no network",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c9",
+      "kind": "requirement",
+      "text": "the local clone lands in the workspace root (guildmaster's parent dir), resolved PORTABLY via skills.local.yaml / --workspace-root \u2014 never a hardcoded home path (steward doctor portability invariant)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h3",
+          "text": "no tracked file or generated output holds an absolute home path; the clone dir resolves from config/flag, falling back to the guildmaster repo's parent",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c10",
+      "kind": "requirement",
+      "text": "the skill kit is COPIED directly into the new repo's .claude/skills/ (file copy of each canonical skill dir, inbound-origin attribution preserved), not rendered as a GitHub issue",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h4",
+          "text": "each .claude/skills/<name>/ dir in the new repo is content-identical to guildmaster's canonical copy (minus git-ignored local files); inbound skills keep origin attribution",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c11",
+      "kind": "requirement",
+      "text": "generated identity files (CLAUDE.md, culture.yaml, skills.local.yaml.example) must satisfy steward doctor's prompt-file-present, backend-consistency, skills-convention and portability invariants on first run",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h5",
+          "text": "steward doctor --scope self on the fresh clone reports prompt-file-present, backend-consistency, skills-convention, and portability all green",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c12",
+      "kind": "decision",
+      "text": "the surface is a NEW top-level verb 'guild create' (not a mode on onboard); it reuses the kit+ledger engine but keeps the irreversible external-side-effect path distinct from the issue-based onboard",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c13",
+      "kind": "decision",
+      "text": "v1 scaffolds the FULL afi-cli skeleton: pyproject, package dir, __init__/__main__, argparse cli chassis, tests, .github tests+publish workflows, CHANGELOG, README, LICENSE \u2014 a runnable CI-green repo from birth, plus kit+identity",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c14",
+      "kind": "decision",
+      "text": "on --apply the genesis commit is pushed to main on the brand-new repo (nothing to clobber); dry-run still writes/pushes nothing external",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": []
+    },
+    {
+      "id": "c15",
+      "kind": "requirement",
+      "text": "the CLAUDE.md guildmaster writes is a self-initializing SEED, not a final runtime prompt: it carries the agent's --desc and an explicit instruction for the new agent to re-init its own CLAUDE.md from that description + the scaffolded repo (an /init-style bootstrap). guildmaster scaffolds the prompt frame + identity; the agent fills in its domain. The seed must still pass steward doctor (prompt-file-present + backend-consistency)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h12",
+          "text": "a freshly-created repo's CLAUDE.md (a) names the agent and embeds its --desc, (b) carries an explicit, actionable re-init instruction, and (c) passes steward doctor prompt-file-present + backend-consistency BEFORE any re-init is run",
+          "status": "confirmed"
+        }
+      ],
+      "hard_questions": [],
+      "links": []
+    }
+  ],
+  "open_vagueness": []
+}
