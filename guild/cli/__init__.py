@@ -32,6 +32,7 @@ class _GuildArgumentParser(argparse.ArgumentParser):
 def _build_parser() -> argparse.ArgumentParser:
     # Deferred import to avoid coupling the parser module to the command modules
     # at import time (matches the afi-cli pattern; cheap insurance).
+    from guild.cli._commands import create as _create_cmd
     from guild.cli._commands import explain as _explain_cmd
     from guild.cli._commands import learn as _learn_cmd
     from guild.cli._commands import onboard as _onboard_cmd
@@ -58,6 +59,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _onboard_cmd.register(sub)
     _overview_cmd.register(sub)
     _show_cmd.register(sub)
+    _create_cmd.register(sub)
 
     return parser
 
