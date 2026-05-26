@@ -162,7 +162,7 @@ def _seed_prompt(bare: str, desc: str, backend: str) -> str:
 
 ## Agent
 
-**{bare}**
+This repository hosts the **{bare}** agent.
 
 ## Description
 
@@ -290,6 +290,12 @@ def _replace_heading_block(lines: list[str], i: int, bare: str, desc: str) -> tu
     if i < len(lines) and _is_desc_stub(lines[i]):
         out.append(desc + "\n")
         i += 1
+        # Consume the rest of the intro paragraph (consecutive non-blank lines)
+        # so a *multi-line* template intro is replaced wholesale rather than
+        # leaving a dangling fragment.  The stub check on the first line already
+        # confirmed this is prose, not a badge block / list / code fence.
+        while i < len(lines) and lines[i].strip() != "":
+            i += 1
     elif i < len(lines):
         out.append(desc + "\n\n")
     else:

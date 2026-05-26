@@ -312,3 +312,39 @@ def test_transform_invalid_backend_raises(tmp_path):
 def test_transform_missing_dest_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         transform_clone(tmp_path / "nonexistent", "appsec", "desc", "claude")
+
+
+def test_transform_readme_replaces_multiline_intro_paragraph(tmp_path):
+    """A *multi-line* template intro must be replaced wholesale — the real
+    culture-agent-template intro spans several lines, and replacing only the
+    first leaves a dangling fragment (regression: agenda genesis README)."""
+    dest = _build_fixture(tmp_path)
+    (dest / "README.md").write_text(
+        "# culture-agent-template\n\n"
+        "A clonable AgentCulture agent template with a consistent structure,\n"
+        "lifecycle, and skills. Clone it, rename the package, and edit\n"
+        "`culture.yaml` to make it your own.\n\n"
+        "## More\n\nMore docs.\n"
+    )
+    transform_clone(dest, "appsec", "AppSec security scanner.", "claude")
+    readme = (dest / "README.md").read_text()
+    # New description present; the entire old intro paragraph is gone.
+    assert "AppSec security scanner." in readme
+    assert "lifecycle, and skills" not in readme
+    assert "Clone it, rename the package" not in readme
+    assert "make it your own" not in readme
+    # Body after the intro paragraph is preserved.
+    assert "## More" in readme
+    assert "More docs." in readme
+
+
+def test_transform_seed_avoids_md036_standalone_emphasis(tmp_path):
+    """The CLAUDE.md seed must not place the agent name on a standalone
+    emphasized line (markdownlint MD036 no-emphasis-as-heading — this broke
+    the agenda genesis CI lint job)."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec scanner.", "claude")
+    seed_lines = [ln.strip() for ln in (dest / "CLAUDE.md").read_text().splitlines()]
+    assert "**appsec**" not in seed_lines
+    # The name still appears, inlined in prose.
+    assert any("appsec" in ln for ln in seed_lines)

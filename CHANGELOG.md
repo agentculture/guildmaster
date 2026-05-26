@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-05-26
+
+### Added
+
+- **Registered `agenda`** (`agentculture/agenda`) in `docs/skill-sources.md` as a
+  downstream consumer of the canonical kit — the first sibling provisioned via
+  `guild create --apply`.
+
+### Fixed
+
+- **`guild create` seed generator (`instantiate.py`)**: the CLAUDE.md/AGENTS.md
+  seed emitted the agent name as a standalone emphasized line (`**<name>**`),
+  tripping markdownlint **MD036** and failing the new repo's first CI run; the
+  name is now inlined in a sentence.
+- **`guild create` README rewrite**: `_set_readme_intro` only replaced the first
+  line of the template's intro, leaving a dangling fragment when the intro spans
+  multiple lines (as the real `culture-agent-template` intro does). It now
+  replaces the whole first paragraph. Both bugs surfaced provisioning `agenda`;
+  regression tests added.
+
 ## [0.6.0] - 2026-05-26
 
 ### Added
