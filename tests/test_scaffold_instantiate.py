@@ -191,6 +191,18 @@ def test_transform_sets_description_in_pyproject(tmp_path):
     assert "clonable" not in pyproject
 
 
+def test_transform_escapes_description_for_toml(tmp_path):
+    """A desc with quotes/backslashes must yield valid, round-tripping TOML."""
+    import tomllib
+
+    dest = _build_fixture(tmp_path)
+    tricky = 'Scans for "secrets" and C:\\paths\\here'
+    transform_clone(dest, "appsec", tricky, "claude")
+    pyproject = (dest / "pyproject.toml").read_text()
+    data = tomllib.loads(pyproject)  # must parse without error
+    assert data["project"]["description"] == tricky
+
+
 def test_transform_replaces_culture_yaml_suffix(tmp_path):
     dest = _build_fixture(tmp_path)
     transform_clone(dest, "appsec", "AppSec agent.", "claude")

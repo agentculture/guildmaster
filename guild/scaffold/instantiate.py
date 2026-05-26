@@ -219,6 +219,22 @@ def _text_replace_file(path: Path, replacements: dict[str, str]) -> None:
         path.write_text(text, encoding="utf-8")
 
 
+def _toml_escape(s: str) -> str:
+    """Escape *s* for a TOML basic (double-quoted) string.
+
+    Backslash first (so the escapes added below aren't doubled), then quote and
+    control chars — a ``--desc`` containing ``\\``, ``"`` or a newline would
+    otherwise produce invalid TOML.
+    """
+    return (
+        s.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
+    )
+
+
 def _set_pyproject_description(pyproject: Path, desc: str) -> None:
     """Replace the ``description = "..."`` line in *pyproject* with *desc*.
 
@@ -234,7 +250,7 @@ def _set_pyproject_description(pyproject: Path, desc: str) -> None:
     # Match: description = "..." or description = '...'
     new_text = re.sub(
         r'^(description\s*=\s*)["\'][^"\']*["\']',
-        lambda m: m.group(1) + '"' + desc.replace('"', '\\"') + '"',
+        lambda m: m.group(1) + '"' + _toml_escape(desc) + '"',
         text,
         flags=re.MULTILINE,
     )

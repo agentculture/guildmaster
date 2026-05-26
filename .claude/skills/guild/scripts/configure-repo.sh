@@ -59,14 +59,14 @@ for env in "${ENVIRONMENTS[@]}"; do
     fi
 done
 
-# 3. ruleset "Protect main" (idempotent by name) ----------------------------
-existing="$(gh api "repos/$repo/rulesets" --jq '.[].name' 2>/dev/null || true)"
-if printf '%s\n' "$existing" | grep -Fxq "$RULESET_NAME"; then
+# 3. ruleset "Protect main" (idempotent by name; no gh calls in dry-run) -----
+if ! $apply; then
+    echo "  would: ensure ruleset '$RULESET_NAME' (deletion + non_fast_forward + pull_request; created if absent)"
+elif gh api "repos/$repo/rulesets" --jq '.[].name' 2>/dev/null | grep -Fxq "$RULESET_NAME"; then
     echo "  • ruleset '$RULESET_NAME' already present — skipping"
 else
-    say "create ruleset '$RULESET_NAME' (deletion + non_fast_forward + pull_request)"
-    if $apply; then
-        gh api -X POST "repos/$repo/rulesets" --input - >/dev/null <<JSON
+    echo "  ✓ create ruleset '$RULESET_NAME' (deletion + non_fast_forward + pull_request)"
+    gh api -X POST "repos/$repo/rulesets" --input - >/dev/null <<JSON
 {
   "name": "$RULESET_NAME",
   "target": "branch",
@@ -87,17 +87,16 @@ else
   ]
 }
 JSON
-    fi
 fi
 
 # 4. SONAR_TOKEN secret (empty placeholder; never clobber an override) -------
-if gh secret list --repo "$repo" 2>/dev/null | grep -q "^${SONAR_SECRET}\b"; then
+if ! $apply; then
+    echo "  would: ensure secret '$SONAR_SECRET' (created empty if absent; never clobbers an override)"
+elif gh secret list --repo "$repo" 2>/dev/null | grep -q "^${SONAR_SECRET}\b"; then
     echo "  • secret '$SONAR_SECRET' already set — leaving it (override lives in GitHub)"
 else
-    say "create empty secret '$SONAR_SECRET' (override it in the GitHub UI)"
-    if $apply; then
-        printf '' | gh secret set "$SONAR_SECRET" --repo "$repo" >/dev/null
-    fi
+    echo "  ✓ create empty secret '$SONAR_SECRET' (override it in the GitHub UI)"
+    printf '' | gh secret set "$SONAR_SECRET" --repo "$repo" >/dev/null
 fi
 
 echo "── done ──"
