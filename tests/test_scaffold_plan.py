@@ -27,6 +27,11 @@ _AGENT = "agentculture/appsec"
 _DESC = "AppSec agent for the AgentCulture mesh"
 _BACKEND = "claude"
 
+# The guildmaster repo root, resolved portably from this test file's location
+# (tests/ -> repo root). Never hardcode an absolute worktree/home path: it
+# breaks in any other checkout and trips steward doctor's portability invariant.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def _build_plan(**kw):
     """Import and call plan.build with sensible defaults."""
@@ -68,7 +73,7 @@ class TestProvisionPlanFields:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert hasattr(plan, "repo_spec")
@@ -80,7 +85,7 @@ class TestProvisionPlanFields:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert hasattr(plan, "manifest")
@@ -92,7 +97,7 @@ class TestProvisionPlanFields:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert hasattr(plan, "kit_dests")
@@ -104,7 +109,7 @@ class TestProvisionPlanFields:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert hasattr(plan, "ledger_diff")
@@ -120,7 +125,7 @@ class TestRepoSpec:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert plan.repo_spec["agent"] == _AGENT
@@ -132,7 +137,7 @@ class TestRepoSpec:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert plan.repo_spec["desc"] == _DESC
@@ -144,7 +149,7 @@ class TestRepoSpec:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert plan.repo_spec["backend"] == _BACKEND
@@ -156,7 +161,7 @@ class TestRepoSpec:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert plan.repo_spec["visibility"] == "public"
@@ -168,7 +173,7 @@ class TestRepoSpec:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert plan.repo_spec["license"] == "MIT"
@@ -180,7 +185,7 @@ class TestRepoSpec:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         # clone_dest should be workspace_root / "appsec"
@@ -199,7 +204,7 @@ class TestManifest:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert isinstance(plan.manifest, dict)
@@ -211,7 +216,7 @@ class TestManifest:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         # From manifest.build
@@ -225,7 +230,7 @@ class TestManifest:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         # From identity.build
@@ -241,7 +246,7 @@ class TestManifest:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         # Identity adds CLAUDE.md; manifest.build does not produce it
@@ -259,7 +264,7 @@ class TestKitDests:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert isinstance(plan.kit_dests, list)
@@ -271,7 +276,7 @@ class TestKitDests:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         for dest in plan.kit_dests:
@@ -284,7 +289,7 @@ class TestKitDests:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert len(plan.kit_dests) > 0, "kit_dests should not be empty"
@@ -297,7 +302,7 @@ class TestKitDests:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         for dest in plan.kit_dests:
@@ -316,7 +321,7 @@ class TestLedgerDiff:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         assert isinstance(plan.ledger_diff, str)
@@ -332,7 +337,7 @@ class TestRenderHuman:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         rendered = plan.render_human()
@@ -345,7 +350,7 @@ class TestRenderHuman:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         rendered = plan.render_human()
@@ -358,7 +363,7 @@ class TestRenderHuman:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         rendered = plan.render_human()
@@ -372,7 +377,7 @@ class TestRenderHuman:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         rendered = plan.render_human()
@@ -385,7 +390,7 @@ class TestRenderHuman:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         rendered = plan.render_human()
@@ -402,7 +407,7 @@ class TestToDict:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         d = plan.to_dict()
@@ -415,7 +420,7 @@ class TestToDict:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         d = plan.to_dict()
@@ -430,7 +435,7 @@ class TestToDict:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         d = plan.to_dict()
@@ -444,7 +449,7 @@ class TestToDict:
             agent=_AGENT,
             desc=_DESC,
             backend=_BACKEND,
-            root=Path("/home/spark/git/worktrees/agent-t5"),
+            root=_REPO_ROOT,
             workspace_root=tmp_path,
         )
         d = plan.to_dict()
@@ -499,7 +504,7 @@ class TestZeroExternal:
         """build() completes with zero subprocess/network calls."""
         from guild.scaffold.plan import build
 
-        root = Path("/home/spark/git/worktrees/agent-t5")
+        root = _REPO_ROOT
         # Should not raise (the fixtures raise on any subprocess/socket use)
         plan = build(
             agent=_AGENT,
@@ -514,7 +519,7 @@ class TestZeroExternal:
         """render_human() completes with zero subprocess/network calls."""
         from guild.scaffold.plan import build
 
-        root = Path("/home/spark/git/worktrees/agent-t5")
+        root = _REPO_ROOT
         plan = build(
             agent=_AGENT,
             desc=_DESC,
@@ -529,7 +534,7 @@ class TestZeroExternal:
         """to_dict() completes with zero subprocess/network calls."""
         from guild.scaffold.plan import build
 
-        root = Path("/home/spark/git/worktrees/agent-t5")
+        root = _REPO_ROOT
         plan = build(
             agent=_AGENT,
             desc=_DESC,
@@ -544,7 +549,7 @@ class TestZeroExternal:
         """build()+render_human()+to_dict() write nothing outside .devague."""
         from guild.scaffold.plan import build
 
-        root = Path("/home/spark/git/worktrees/agent-t5")
+        root = _REPO_ROOT
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
 
