@@ -36,7 +36,7 @@ from guild.skills import ledger as _ledger
 def register(sub: argparse._SubParsersAction) -> None:
     parser = sub.add_parser(
         "create",
-        help=("Provision a brand-new sibling repo from the template " "(dry-run unless --apply)."),
+        help="Provision a brand-new sibling repo from the template (dry-run unless --apply).",
         description=(
             "Instantiate ``agentculture/culture-agent-template``, rename "
             "identifiers to match the new agent, write a self-init CLAUDE.md "
@@ -82,7 +82,7 @@ def register(sub: argparse._SubParsersAction) -> None:
         "--template",
         metavar="OWNER/REPO",
         default=_provision.DEFAULT_TEMPLATE,
-        help=(f"GitHub template repo to instantiate " f"(default: {_provision.DEFAULT_TEMPLATE})."),
+        help=f"GitHub template repo to instantiate (default: {_provision.DEFAULT_TEMPLATE}).",
     )
     parser.add_argument(
         "--apply",
@@ -105,7 +105,7 @@ def register(sub: argparse._SubParsersAction) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _handle(args: argparse.Namespace) -> int:
+def _handle(args: argparse.Namespace) -> None:
     root = repo_root()
     agent = _broadcast.normalize_target(args.agent, args.org)
     bare = agent.rsplit("/", 1)[-1]
@@ -143,7 +143,7 @@ def _handle(args: argparse.Namespace) -> int:
             "ledger_diff": ledger_diff,
         }
         emit_result(json.dumps(dry_result, indent=2) if args.json else _render_dry_run(dry_result))
-        return 0
+        return
 
     # --apply path.
     apply_result = _provision.apply(
@@ -172,7 +172,6 @@ def _handle(args: argparse.Namespace) -> int:
         "ledger_written": ledger_written,
     }
     emit_result(json.dumps(result, indent=2) if args.json else _render_apply(result))
-    return 0
 
 
 # ---------------------------------------------------------------------------

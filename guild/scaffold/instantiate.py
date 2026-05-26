@@ -233,13 +233,53 @@ def _set_pyproject_description(pyproject: Path, desc: str) -> None:
         return
     # Match: description = "..." or description = '...'
     new_text = re.sub(
-        r'^(description\s*=\s*)["\'].*?["\']',
+        r'^(description\s*=\s*)["\'][^"\']*["\']',
         lambda m: m.group(1) + '"' + desc.replace('"', '\\"') + '"',
         text,
         flags=re.MULTILINE,
     )
     if new_text != text:
         pyproject.write_text(new_text, encoding="utf-8")
+
+
+def _is_desc_stub(line: str) -> bool:
+    """Return True if *line* looks like a short plain-text description placeholder.
+
+    A stub is a non-empty line that has no markdown structural prefix (heading,
+    blockquote, badge/link, code fence, list item) and is under 200 characters.
+    """
+    stripped = line.strip()
+    if not stripped:
+        return False
+    if len(stripped) >= 200:
+        return False
+    return not re.match(r"^[#>`\-\*!\[]", stripped)
+
+
+def _replace_heading_block(lines: list[str], i: int, bare: str, desc: str) -> tuple[list[str], int]:
+    """Replace the heading at *lines[i]* and its following description stub.
+
+    Returns ``(out_lines, new_i)`` — the output lines for the heading block and
+    the index of the next unconsumed line.
+    """
+    out: list[str] = [f"# {bare}\n"]
+    i += 1
+
+    # Pass through blank lines that follow the heading.
+    while i < len(lines) and lines[i].strip() == "":
+        out.append(lines[i])
+        i += 1
+
+    # Replace or insert the description.
+    if i < len(lines) and _is_desc_stub(lines[i]):
+        out.append(desc + "\n")
+        i += 1
+    elif i < len(lines):
+        out.append(desc + "\n\n")
+    else:
+        out.append(desc + "\n")
+
+    return out, i
 
 
 def _set_readme_intro(readme: Path, bare: str, desc: str) -> None:
@@ -269,31 +309,9 @@ def _set_readme_intro(readme: Path, bare: str, desc: str) -> None:
     while i < len(lines):
         line = lines[i]
         if not replaced_heading and re.match(r"^#\s", line):
-            # Replace heading with new agent name.
-            out.append(f"# {bare}\n")
+            heading_out, i = _replace_heading_block(lines, i, bare, desc)
+            out.extend(heading_out)
             replaced_heading = True
-            i += 1
-            # Skip (or replace) the first non-blank line after the heading
-            # if it appears to be a description placeholder.
-            while i < len(lines) and lines[i].strip() == "":
-                out.append(lines[i])
-                i += 1
-            if i < len(lines):
-                next_line = lines[i]
-                # Replace if it's a short plain-text line (not a heading, not a
-                # badge/link/code/blockquote/list) — the template's own blurb.
-                is_stub = (
-                    not re.match(r"^[#>`\-\*!\[]", next_line.strip())
-                    and len(next_line.strip()) < 200
-                    and next_line.strip()
-                )
-                if is_stub:
-                    out.append(desc + "\n")
-                    i += 1
-                else:
-                    out.append(desc + "\n\n")
-            else:
-                out.append(desc + "\n")
             continue
         out.append(line)
         i += 1
@@ -348,7 +366,7 @@ def transform_clone(
     if not dest.is_dir():
         raise FileNotFoundError(f"dest is not a directory: {dest}")
 
-    pkg, repo_token = _derive(bare)
+    pkg, _ = _derive(bare)
     replacements = rename_map(bare)  # underscore first, then hyphen
 
     # Step 1 — global text replace (visit all files before the directory rename

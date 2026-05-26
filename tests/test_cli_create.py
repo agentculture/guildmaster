@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import socket
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,16 @@ import pytest
 from guild.cli import main
 from guild.cli._commands._provision_template import RunResult
 from guild.cli._errors import GuildError
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _never_called(*args, **kwargs):
+    """Replacement for subprocess.run / socket.getaddrinfo that must not be called."""
+    raise AssertionError("unexpected external call in dry-run")
+
 
 # ---------------------------------------------------------------------------
 # Fixture builder
@@ -63,17 +74,8 @@ def test_create_dry_run_json(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
     # Block all subprocess/network so a stray call raises immediately.
-    import subprocess
-
-    def _no_subprocess(*a, **k):
-        raise AssertionError("subprocess called during dry-run")
-
-    monkeypatch.setattr(subprocess, "run", _no_subprocess)
-    monkeypatch.setattr(
-        socket,
-        "getaddrinfo",
-        lambda *a, **k: (_ for _ in ()).throw(AssertionError("network called")),
-    )
+    monkeypatch.setattr(subprocess, "run", _never_called)
+    monkeypatch.setattr(socket, "getaddrinfo", _never_called)
 
     rc = main(["create", "--agent", "newsib", "--desc", "A new sibling.", "--json"])
     assert rc == 0
@@ -96,13 +98,7 @@ def test_create_dry_run_json(tmp_path, monkeypatch, capsys):
 def test_create_dry_run_human(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
-    import subprocess
-
-    monkeypatch.setattr(
-        subprocess,
-        "run",
-        lambda *a, **k: (_ for _ in ()).throw(AssertionError("subprocess in dry-run")),
-    )
+    monkeypatch.setattr(subprocess, "run", _never_called)
 
     rc = main(["create", "--agent", "newsib", "--desc", "A new sibling."])
     assert rc == 0
@@ -115,9 +111,7 @@ def test_create_dry_run_human(tmp_path, monkeypatch, capsys):
 def test_create_dry_run_ledger_diff_present(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+    monkeypatch.setattr(subprocess, "run", _never_called)
 
     rc = main(["create", "--agent", "newsib", "--desc", "New agent.", "--json"])
     assert rc == 0
@@ -131,9 +125,7 @@ def test_create_dry_run_no_writes_outside_devague(tmp_path, monkeypatch):
     root = _seed(tmp_path)
     monkeypatch.chdir(root)
 
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+    monkeypatch.setattr(subprocess, "run", _never_called)
 
     # Snapshot the tree before
     before = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
@@ -148,9 +140,7 @@ def test_create_dry_run_no_writes_outside_devague(tmp_path, monkeypatch):
 def test_create_dry_run_custom_template(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+    monkeypatch.setattr(subprocess, "run", _never_called)
 
     rc = main(
         [
@@ -172,9 +162,7 @@ def test_create_dry_run_custom_template(tmp_path, monkeypatch, capsys):
 def test_create_dry_run_bare_agent_gets_org(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+    monkeypatch.setattr(subprocess, "run", _never_called)
 
     rc = main(["create", "--agent", "bareonly", "--desc", "bare test", "--json"])
     assert rc == 0
@@ -185,9 +173,7 @@ def test_create_dry_run_bare_agent_gets_org(tmp_path, monkeypatch, capsys):
 def test_create_dry_run_explicit_owner_not_prefixed(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+    monkeypatch.setattr(subprocess, "run", _never_called)
 
     rc = main(["create", "--agent", "myorg/my-agent", "--desc", "explicit owner", "--json"])
     assert rc == 0
@@ -239,7 +225,7 @@ class _FakeRunner:
                 "# culture_agent_template\n"
             )
             (clone_dest / "pyproject.toml").write_text(
-                '[project]\nname = "culture-agent-template"\n' 'description = "Template desc."\n'
+                '[project]\nname = "culture-agent-template"\ndescription = "Template desc."\n'
             )
             (clone_dest / "culture.yaml").write_text(
                 "agents:\n- suffix: culture-agent-template\n  backend: claude\n"
