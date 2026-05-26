@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-05-27
+
+### Added
+
+- **Registered `convertible`** (`agentculture/convertible`) in
+  `docs/skill-sources.md` as a downstream consumer of the canonical kit —
+  provisioned via `guild create --apply` from `culture-agent-template`. It is a
+  swappable coder-agent harness that turns different models into repo workers
+  behind one shared task contract — "the car around the model" (originating
+  brief: [#34](https://github.com/agentculture/guildmaster/issues/34); handed to
+  the new agent as
+  [`convertible#1`](https://github.com/agentculture/convertible/issues/1)).
+
 ## [0.6.2] - 2026-05-26
 
 ### Added
