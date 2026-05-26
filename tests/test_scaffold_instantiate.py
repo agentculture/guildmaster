@@ -312,3 +312,76 @@ def test_transform_invalid_backend_raises(tmp_path):
 def test_transform_missing_dest_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         transform_clone(tmp_path / "nonexistent", "appsec", "desc", "claude")
+
+
+def test_transform_readme_replaces_multiline_intro_paragraph(tmp_path):
+    """A *multi-line* template intro must be replaced wholesale — the real
+    culture-agent-template intro spans several lines, and replacing only the
+    first leaves a dangling fragment (regression: agenda genesis README)."""
+    dest = _build_fixture(tmp_path)
+    (dest / "README.md").write_text(
+        "# culture-agent-template\n\n"
+        "A clonable AgentCulture agent template with a consistent structure,\n"
+        "lifecycle, and skills. Clone it, rename the package, and edit\n"
+        "`culture.yaml` to make it your own.\n\n"
+        "## More\n\nMore docs.\n"
+    )
+    transform_clone(dest, "appsec", "AppSec security scanner.", "claude")
+    readme = (dest / "README.md").read_text()
+    # New description present; the entire old intro paragraph is gone.
+    assert "AppSec security scanner." in readme
+    assert "lifecycle, and skills" not in readme
+    assert "Clone it, rename the package" not in readme
+    assert "make it your own" not in readme
+    # Body after the intro paragraph is preserved.
+    assert "## More" in readme
+    assert "More docs." in readme
+
+
+def test_transform_readme_stops_intro_at_block_without_blank_line(tmp_path):
+    """Intro-paragraph consumption must stop at the start of a new markdown
+    block even when no blank line separates it from the intro stub — otherwise
+    a following heading/list/badge is silently dropped (Qodo, PR #29)."""
+    dest = _build_fixture(tmp_path)
+    (dest / "README.md").write_text(
+        "# culture-agent-template\n\n"
+        "A clonable template.\n"  # stub immediately followed by a heading
+        "## Features\n\n- one\n- two\n"
+    )
+    transform_clone(dest, "appsec", "AppSec scanner.", "claude")
+    readme = (dest / "README.md").read_text()
+    assert "AppSec scanner." in readme
+    assert "A clonable template." not in readme  # stub replaced
+    # The block that immediately follows the stub must survive.
+    assert "## Features" in readme
+    assert "- one" in readme
+    assert "- two" in readme
+
+
+def test_transform_readme_consumes_wrapped_inline_code_prose(tmp_path):
+    """A continuation line beginning with a *single* backtick (inline code) is
+    wrapped prose, not a block start, so it is consumed with the intro."""
+    dest = _build_fixture(tmp_path)
+    (dest / "README.md").write_text(
+        "# culture-agent-template\n\n"
+        "A clonable template you configure by editing\n"
+        "`culture.yaml` to taste.\n\n"
+        "## More\n"
+    )
+    transform_clone(dest, "appsec", "AppSec scanner.", "claude")
+    readme = (dest / "README.md").read_text()
+    assert "AppSec scanner." in readme
+    assert "culture.yaml` to taste" not in readme  # backtick prose consumed
+    assert "## More" in readme
+
+
+def test_transform_seed_avoids_md036_standalone_emphasis(tmp_path):
+    """The CLAUDE.md seed must not place the agent name on a standalone
+    emphasized line (markdownlint MD036 no-emphasis-as-heading — this broke
+    the agenda genesis CI lint job)."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec scanner.", "claude")
+    seed_lines = [ln.strip() for ln in (dest / "CLAUDE.md").read_text().splitlines()]
+    assert "**appsec**" not in seed_lines
+    # The name still appears, inlined in prose.
+    assert any("appsec" in ln for ln in seed_lines)
