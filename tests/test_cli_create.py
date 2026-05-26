@@ -12,8 +12,11 @@ import json
 import socket
 from pathlib import Path
 
+import pytest
+
 from guild.cli import main
 from guild.cli._commands._provision_template import RunResult
+from guild.cli._errors import GuildError
 
 # ---------------------------------------------------------------------------
 # Fixture builder
@@ -217,6 +220,10 @@ class _FakeRunner:
         if argv[:3] == ["gh", "repo", "view"]:
             return RunResult(returncode=0 if self._repo_exists else 1)
 
+        # gh api repos/<agent>/commits — the template-populate poll.
+        if argv[:2] == ["gh", "api"] and len(argv) > 2 and argv[2].endswith("/commits"):
+            return RunResult(returncode=0, stdout="1\n")
+
         # gh repo create (template)
         if argv[:2] == ["gh", "repo"] and "create" in argv:
             return RunResult(returncode=0, stdout="https://github.com/agentculture/newsib\n")
@@ -302,6 +309,41 @@ def test_create_apply_full_command_sequence(tmp_path, monkeypatch, capsys):
     push_idx = next(i for i, c in enumerate(issued) if "git" in c and "push" in c)
     cfg_idx = next(i for i, c in enumerate(issued) if "configure-repo.sh" in c)
     assert push_idx < cfg_idx, f"push must precede configure-repo.sh; got {issued}"
+
+    # Regression: the template-populate poll must run BEFORE the clone (gh copies
+    # the template asynchronously; cloning an empty repo loses all content).
+    poll_idx = next(i for i, c in enumerate(issued) if "gh api" in c and "/commits" in c)
+    clone_idx = next(i for i, c in enumerate(issued) if "git clone" in c)
+    assert poll_idx < clone_idx, f"populate-poll must precede clone; got {issued}"
+
+
+def test_wait_for_template_polls_until_populated():
+    """The repo is empty (409) for a few polls, then the template lands."""
+    import guild.cli._commands._provision_template as _prov
+
+    n = {"calls": 0}
+
+    def runner(cmd, *, cwd=None):
+        if cmd[:2] == ["gh", "api"] and cmd[2].endswith("/commits"):
+            n["calls"] += 1
+            if n["calls"] < 3:
+                return RunResult(returncode=1, stdout="", stderr="Git Repository is empty")
+            return RunResult(returncode=0, stdout="1\n")
+        return RunResult(returncode=0)
+
+    _prov._wait_for_template("agentculture/x", runner, attempts=5, delay=0)
+    assert n["calls"] == 3  # polled until the initial commit appeared
+
+
+def test_wait_for_template_times_out():
+    """Never populated → GuildError after exhausting attempts (no hang: delay=0)."""
+    import guild.cli._commands._provision_template as _prov
+
+    def runner(cmd, *, cwd=None):
+        return RunResult(returncode=1, stdout="", stderr="empty")
+
+    with pytest.raises(GuildError):
+        _prov._wait_for_template("agentculture/x", runner, attempts=3, delay=0)
 
 
 def test_create_apply_json_result(tmp_path, monkeypatch, capsys):

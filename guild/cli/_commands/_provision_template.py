@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess  # nosec B404 — argv lists only; never shell=True
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Sequence
@@ -185,6 +186,38 @@ def preflight(
 
 
 # ---------------------------------------------------------------------------
+# Template-populate wait — gh copies the template asynchronously
+# ---------------------------------------------------------------------------
+
+
+def _wait_for_template(
+    agent: str,
+    runner: Runner,
+    *,
+    attempts: int = 30,
+    delay: float = 2.0,
+) -> None:
+    """Block until GitHub has copied the template content into *agent*.
+
+    ``gh repo create --template`` returns before the copy completes; the new
+    repo is briefly empty (0 commits). Cloning then yields an empty tree and the
+    transform runs on nothing. Poll the commit count until the template's
+    initial commit lands.
+    """
+    for _ in range(max(1, attempts)):
+        res = runner(["gh", "api", f"repos/{agent}/commits", "--jq", "length"])
+        if res.returncode == 0 and res.stdout.strip().isdigit() and int(res.stdout.strip()) >= 1:
+            return
+        if delay:
+            time.sleep(delay)
+    raise GuildError(
+        code=EXIT_ENV_ERROR,
+        message=f"template content did not populate for {agent} within the timeout",
+        remediation="GitHub's template copy is slow or failed — re-run `guild create`",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Apply — the external acts, in order
 # ---------------------------------------------------------------------------
 
@@ -198,6 +231,8 @@ def apply(
     guildmaster_root: Path,
     runner: Runner | None = None,
     template: str = DEFAULT_TEMPLATE,
+    poll_attempts: int = 30,
+    poll_delay: float = 2.0,
 ) -> dict:
     """Provision the new sibling repo by instantiating the template.
 
@@ -220,6 +255,12 @@ def apply(
         Callable ``(cmd, cwd=None) -> RunResult``.  Defaults to real subprocess.
     template:
         The GitHub template repo to instantiate (default: ``DEFAULT_TEMPLATE``).
+    poll_attempts / poll_delay:
+        ``gh repo create --template`` copies the template content
+        **asynchronously**; cloning immediately yields an empty repo. After
+        create, poll up to *poll_attempts* times (``poll_delay`` seconds apart)
+        for the template's initial commit to land before cloning. Tests pass
+        ``poll_delay=0``.
 
     Returns
     -------
@@ -255,6 +296,9 @@ def apply(
         ]
     )
     _check(create, f"gh repo create {agent} from template {template!r} failed", EXIT_ENV_ERROR)
+
+    # Step 2b — wait for the async template copy to land (else the clone is empty).
+    _wait_for_template(agent, runner, attempts=poll_attempts, delay=poll_delay)
 
     # Step 3 — clone.
     clone = runner(["git", "clone", _repo_https_url(agent), str(clone_dest)])
