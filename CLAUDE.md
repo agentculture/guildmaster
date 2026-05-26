@@ -106,6 +106,10 @@ asked for one; guildmaster fulfills the broadcast *role* via these two instead).
 Going live is gated on the steward→guildmaster cutover (`docs/cutover.md`) — no
 two live broadcasters.
 
+**Provisioning verb — `guild create` (template-instantiate a new sibling).**
+
+- `guild create --agent OWNER/REPO --desc TEXT [--backend claude|acp] [--workspace-root DIR] [--template agentculture/culture-agent-template] [--apply] [--json]` — provision a brand-new AgentCulture sibling by instantiating the GitHub template, renaming identifiers throughout the clone, writing a self-init CLAUDE.md seed, configuring the GitHub repo (branch protection, environments, SONAR_TOKEN placeholder), pushing the genesis commit, and registering the agent in `docs/skill-sources.md`. Dry-run by default; `--apply` executes. The transform is **pure** (unit-testable against a fixture dir; no network): `culture_agent_template` → pkg (underscore form, e.g. `my_agent`), `culture-agent-template` → repo token (hyphen form, e.g. `my-agent`). The CLAUDE.md seed is a `/init`-style bootstrap placeholder — run `/init` in the new repo after provisioning to expand it into a full runtime prompt. Implementation: `guild/scaffold/instantiate.py` (pure transform), `guild/cli/_commands/create.py` (CLI), `guild/cli/_commands/_provision_template.py` (injectable-runner executor), `.claude/skills/guild/scripts/create.sh` (thin wrapper).
+
 **Inventory verbs — `overview` & `show` (the read-only surfaces).** guildmaster
 owns the mesh's *inventory* surfaces per
 [issue #12](https://github.com/agentculture/guildmaster/issues/12) — the

@@ -1,18 +1,19 @@
 ---
 name: guild
 description: >
-  Run guildmaster's skills-supplier overview and narrate it. Run `guild
-  overview` (via scripts/overview.sh) for the deterministic evidence pack — the
-  canonical skill set + versions/origins, the docs/skill-sources.md ledger, and
-  skills-scoped drift signals — then narrate three separated layers: observed
-  facts, inferred relationships, and suggestions (each naming the command that
-  enacts it). Use when an operator asks "what skills do we supply", "who
-  consumes what", "is anything drifting", or "what should I teach next".
-  Skills-scoped and reflect-only — it surfaces and interprets supplier-side
-  skill/version signals; it does NOT narrate the agent relationship graph or
-  judge alignment (that stays with steward's org-overview / steward doctor).
-  The skills-scoped excerpt of steward's `org-overview` narration contract
-  (cite-don't-import, issue #12).
+  Run guildmaster's skills-supplier CLI surfaces and narrate them. Covers
+  `guild overview` (evidence pack: canonical skill set + ledger + drift),
+  `guild create` (provision a new sibling repo by instantiating the template),
+  and `guild show` (one agent's config). Run the matching script for
+  deterministic evidence, then narrate three separated layers: observed facts,
+  inferred relationships, and suggestions (each naming the command that enacts
+  it). Use when an operator asks "what skills do we supply", "provision a new
+  agent", "who consumes what", "is anything drifting", or "what should I teach
+  next". Skills-scoped and reflect-only for overview/show; create is a write
+  verb (dry-run by default, --apply executes). Does NOT narrate the agent
+  relationship graph or judge alignment (steward's lane). The skills-scoped
+  excerpt of steward's `org-overview` narration contract (cite-don't-import,
+  issue #12).
 type: command
 ---
 
@@ -72,7 +73,7 @@ without waiting for the cutover. Still skills-scoped — no relationship graph.
 - "What should I `teach` next?" — overview's gaps are the input to `teach`.
 - Before `guild teach` / `guild onboard`, to see uncovered skills and kit gaps.
 
-## How to run
+## How to run `guild overview`
 
 One script. Pick the scope (or just run `guild overview`, which this wraps):
 
@@ -90,6 +91,64 @@ One script. Pick the scope (or just run `guild overview`, which this wraps):
 .claude/skills/guild/scripts/overview.sh --json
 .claude/skills/guild/scripts/overview.sh --scope mesh --json
 ```
+
+## How to run `guild create`
+
+Provision a new sibling by instantiating the GitHub template and customising it:
+
+```bash
+# Dry-run — renders the rename plan + ledger diff, performs nothing external
+.claude/skills/guild/scripts/create.sh \
+    --agent agentculture/new-agent \
+    --desc "A short description of the new agent."
+
+# --apply — actually creates the repo, clones, transforms, pushes, registers
+.claude/skills/guild/scripts/create.sh \
+    --agent agentculture/new-agent \
+    --desc "A short description." \
+    --apply
+
+# Custom template or backend
+.claude/skills/guild/scripts/create.sh \
+    --agent agentculture/new-agent \
+    --desc "An ACP agent." \
+    --backend acp \
+    --template myorg/my-template \
+    --apply
+
+# JSON output (works in both dry-run and apply)
+.claude/skills/guild/scripts/create.sh \
+    --agent agentculture/new-agent \
+    --desc "Machine-readable output." \
+    --json
+```
+
+### What `guild create` does
+
+1. Instantiates `agentculture/culture-agent-template` (or `--template`) via
+   `gh repo create --template`.
+2. Clones the new repo into `<workspace-root>/<bare>`.
+3. Runs the **pure transform** on the clone:
+   - global text replace: `culture_agent_template` → pkg, `culture-agent-template` → repo token
+   - renames the package directory
+   - sets `description` in `pyproject.toml`
+   - rewrites `README.md` first heading + intro
+   - overwrites `CLAUDE.md` with a self-init seed (names the agent, embeds the
+     description, carries a `/init` re-init instruction)
+4. Runs `configure-repo.sh` to apply GitHub settings (branch protection,
+   environments, `SONAR_TOKEN` placeholder).
+5. Stages, commits (`scaffold <bare> from culture-agent-template`), and pushes.
+6. Registers the new agent in `docs/skill-sources.md` (idempotent).
+
+Dry-run (default) performs steps 1–5 as a plan description only — nothing
+external. `--apply` executes all steps.
+
+### When to use
+
+- Provisioning a brand-new AgentCulture sibling repo.
+- Before `guild onboard` (create the repo first, then onboard the skill kit).
+- The new agent gets a `/init` seed CLAUDE.md; run `/init` in the new repo to
+  expand it into a full runtime prompt.
 
 The script prints the CLI's markdown by default: the canonical-skill table, a
 ledger section, and a drift section. The exact per-skill consumer and gap lists
