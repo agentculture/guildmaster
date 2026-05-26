@@ -34,6 +34,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     external-free guarantee, `--apply` command sequence, fail-fast on existing
     repo / no auth / non-empty dest, ledger idempotency.
 
+## [0.5.1] - 2026-05-24
+
+### Changed
+
+- **`docs/cutover.md` → complete.** The steward → guildmaster broadcaster cutover
+  is done: guildmaster owns the supplier ledger and is the sole broadcaster;
+  `--apply` is live. First post-cutover broadcast was the 2026-05-24 `guild teach`
+  resync to 7 agents. Notes that steward's written records ([PR #62](https://github.com/agentculture/steward/pull/62),
+  [#10](https://github.com/agentculture/guildmaster/issues/10)) still describe a
+  partial handoff and are to be reconciled on steward's side.
+
 ## [0.5.0] - 2026-05-24
 
 ### Changed
