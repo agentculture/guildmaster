@@ -35,16 +35,16 @@ def _build_fixture(tmp_path: Path) -> Path:
     pkg_dir = tmp_path / _TEMPLATE_PKG
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text(
-        f'"""culture_agent_template package."""\n'
-        f"from culture_agent_template import cli  # noqa: F401\n"
+        '"""culture_agent_template package."""\n'
+        "from culture_agent_template import cli  # noqa: F401\n"
     )
 
     # pyproject.toml
     (tmp_path / "pyproject.toml").write_text(
-        f'[project]\nname = "culture-agent-template"\n'
-        f'description = "A clonable AgentCulture agent template."\n'
-        f'packages = ["culture_agent_template"]\n'
-        f'\n[project.scripts]\nculture-agent-template = "culture_agent_template.cli:main"\n'
+        '[project]\nname = "culture-agent-template"\n'
+        'description = "A clonable AgentCulture agent template."\n'
+        'packages = ["culture_agent_template"]\n'
+        '\n[project.scripts]\nculture-agent-template = "culture_agent_template.cli:main"\n'
     )
 
     # culture.yaml

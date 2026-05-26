@@ -11,12 +11,8 @@ from __future__ import annotations
 import json
 import socket
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from guild.cli import main
-from guild.cli._commands import _broadcast
 from guild.cli._commands._provision_template import RunResult
 
 # ---------------------------------------------------------------------------
