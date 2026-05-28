@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-05-28
+
+### Added
+
+- Register **`jetson`** (`agentculture/jetson`) as a downstream consumer in
+  `docs/skill-sources.md`. Provisioned via `guild create --apply` from
+  `culture-agent-template` — an agent + CLI for NVIDIA Jetson edge-AI ops
+  (dist `jetson-cli`, command `jetson`).
+
 ## [0.6.3] - 2026-05-27
 
 ### Added
