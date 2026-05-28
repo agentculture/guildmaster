@@ -116,6 +116,13 @@ Provision a new sibling by instantiating the GitHub template and customising it:
     --template myorg/my-template \
     --apply
 
+# Custom PyPI dist name (command + import package stay the repo name)
+.claude/skills/guild/scripts/create.sh \
+    --agent agentculture/jetson \
+    --desc "Edge-AI ops agent." \
+    --dist jetson-cli \
+    --apply
+
 # JSON output (works in both dry-run and apply)
 .claude/skills/guild/scripts/create.sh \
     --agent agentculture/new-agent \
@@ -135,6 +142,9 @@ Provision a new sibling by instantiating the GitHub template and customising it:
    - rewrites `README.md` first heading + intro
    - overwrites `CLAUDE.md` with a self-init seed (names the agent, embeds the
      description, carries a `/init` re-init instruction)
+   - if `--dist` differs from the repo name, retargets the PyPI dist
+     (`[project].name`, the `importlib.metadata` lookup, the TestPyPI install
+     pin) — the command + import package stay the repo name
 4. Runs `configure-repo.sh` to apply GitHub settings (branch protection,
    environments, `SONAR_TOKEN` placeholder).
 5. Stages, commits (`scaffold <bare> from culture-agent-template`), and pushes.

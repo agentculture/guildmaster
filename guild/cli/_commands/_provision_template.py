@@ -241,6 +241,7 @@ def apply(
     guildmaster_root: Path,
     runner: Runner | None = None,
     template: str = DEFAULT_TEMPLATE,
+    dist: str | None = None,
     poll_attempts: int = 30,
     poll_delay: float = 2.0,
 ) -> dict:
@@ -265,6 +266,9 @@ def apply(
         Callable ``(cmd, cwd=None) -> RunResult``.  Defaults to real subprocess.
     template:
         The GitHub template repo to instantiate (default: ``DEFAULT_TEMPLATE``).
+    dist:
+        PyPI distribution name to set in the clone. ``None`` leaves it as the
+        repo name; a different value retargets the dist (see ``transform_clone``).
     poll_attempts / poll_delay:
         ``gh repo create --template`` copies the template content
         **asynchronously**; cloning immediately yields an empty repo. After
@@ -315,7 +319,7 @@ def apply(
     _check(clone, f"git clone {agent} failed", EXIT_ENV_ERROR)
 
     # Step 4 — pure transform (no runner needed).
-    transform_clone(clone_dest, bare, desc, backend)
+    transform_clone(clone_dest, bare, desc, backend, dist=dist)
 
     # Step 5 — stage everything.
     add = runner(["git", "-C", str(clone_dest), "add", "-A"])

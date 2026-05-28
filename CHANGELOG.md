@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-05-28
+
+### Added
+
+- **`guild create --dist NAME`** — set the PyPI **distribution** name at
+  provision time. Defaults to the repo token (unchanged behaviour); pass e.g.
+  `--dist jetson-cli` to ship the dist as `jetson-cli` while the console command
+  and import package stay the repo token (`jetson`), matching the
+  `guild-cli`/`guild` convention. The transform's new step 6 retargets only the
+  three dist-name surfaces — `[project].name`, the `importlib.metadata` version
+  lookup, and the TestPyPI install pin — and is a strict no-op when `--dist`
+  equals (or is omitted and defaults to) the repo token, so the bare-name case
+  (e.g. `dominion-breaker`) is preserved. The name is validated as a PEP 503
+  distribution name before any external act. This removes the manual
+  post-`create` dist rename that `agenda`, `convertible`, and `jetson` each
+  needed. Note: renaming the dist still requires a Trusted Publisher registered
+  for that project name on PyPI/TestPyPI — `guild create` configures the GitHub
+  side only.
+
 ## [0.6.4] - 2026-05-28
 
 ### Added

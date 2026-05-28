@@ -159,6 +159,36 @@ def test_create_dry_run_custom_template(tmp_path, monkeypatch, capsys):
     assert out["template"] == "myorg/my-template"
 
 
+def test_create_dry_run_dist_flag(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(["create", "--agent", "newsib", "--desc", "D.", "--dist", "newsib-cli", "--json"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["plan"]["dist"] == "newsib-cli"
+    assert any("retarget" in s.lower() for s in out["plan"]["steps"])
+
+
+def test_create_dry_run_dist_defaults_to_repo_token(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(["create", "--agent", "newsib", "--desc", "D.", "--json"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["plan"]["dist"] == "newsib"
+
+
+def test_create_rejects_invalid_dist_name(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(["create", "--agent", "newsib", "--desc", "D.", "--dist", "bad name!"])
+    assert rc != 0
+    assert "not a valid PyPI distribution name" in capsys.readouterr().err
+
+
 def test_create_dry_run_bare_agent_gets_org(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
@@ -223,9 +253,18 @@ class _FakeRunner:
             (clone_dest / "culture_agent_template").mkdir()
             (clone_dest / "culture_agent_template" / "__init__.py").write_text(
                 "# culture_agent_template\n"
+                "from importlib.metadata import version as _pkg_version\n"
+                '__version__ = _pkg_version("culture-agent-template")\n'
             )
             (clone_dest / "pyproject.toml").write_text(
                 '[project]\nname = "culture-agent-template"\ndescription = "Template desc."\n'
+                "\n[project.scripts]\n"
+                'culture-agent-template = "culture_agent_template.cli:main"\n'
+            )
+            wf = clone_dest / ".github" / "workflows"
+            wf.mkdir(parents=True)
+            (wf / "publish.yml").write_text(
+                'run: echo "install culture-agent-template==${DEV_VERSION}"\n'
             )
             (clone_dest / "culture.yaml").write_text(
                 "agents:\n- suffix: culture-agent-template\n  backend: claude\n"
@@ -640,3 +679,41 @@ def test_create_apply_transform_renames_in_clone(tmp_path, monkeypatch):
     claude_md = (clone_dest / "CLAUDE.md").read_text()
     assert "newsib" in claude_md
     assert "/init" in claude_md
+
+
+def test_create_apply_dist_retargets_clone(tmp_path, monkeypatch):
+    """--apply with --dist renames the dist in the clone, not the command/pkg."""
+    root = _seed(tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    monkeypatch.chdir(root)
+
+    runner = _FakeRunner()
+    import guild.cli._commands._provision_template as _prov
+
+    monkeypatch.setattr(_prov, "default_runner", runner)
+
+    main(
+        [
+            "create",
+            "--agent",
+            "newsib",
+            "--desc",
+            "Dist test.",
+            "--workspace-root",
+            str(workspace),
+            "--dist",
+            "newsib-cli",
+            "--apply",
+        ]
+    )
+
+    clone_dest = workspace / "newsib"
+    pyproject = (clone_dest / "pyproject.toml").read_text()
+    assert 'name = "newsib-cli"' in pyproject
+    # Command stays the bare repo name.
+    assert 'newsib = "newsib.cli:main"' in pyproject
+    init = (clone_dest / "newsib" / "__init__.py").read_text()
+    assert '_pkg_version("newsib-cli")' in init
+    wf = (clone_dest / ".github" / "workflows" / "publish.yml").read_text()
+    assert "newsib-cli==${DEV_VERSION}" in wf

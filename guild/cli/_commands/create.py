@@ -15,7 +15,7 @@ Usage
     guild create --agent OWNER/REPO --desc TEXT [--org agentculture]
                  [--backend claude|acp] [--workspace-root DIR]
                  [--template agentculture/culture-agent-template]
-                 [--apply] [--json]
+                 [--dist NAME] [--apply] [--json]
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ import argparse
 import difflib
 import json
 import keyword
+import re
 from pathlib import Path
 
 from guild.cli._commands import _broadcast
@@ -87,6 +88,17 @@ def register(sub: argparse._SubParsersAction) -> None:
         help=f"GitHub template repo to instantiate (default: {_provision.DEFAULT_TEMPLATE}).",
     )
     parser.add_argument(
+        "--dist",
+        metavar="NAME",
+        default=None,
+        help=(
+            "PyPI distribution name. Defaults to the repo name; pass e.g. "
+            "'jetson-cli' to ship the dist as 'jetson-cli' while keeping the "
+            "command and import package as the repo name ('jetson'). Retargets "
+            "[project].name, the importlib.metadata lookup, and the TestPyPI pin."
+        ),
+    )
+    parser.add_argument(
         "--apply",
         action="store_true",
         help=(
@@ -127,12 +139,26 @@ def _handle(args: argparse.Namespace) -> None:
             ),
         )
 
+    # Validate the optional PyPI dist name (fail fast, before any external act).
+    # PyPI normalises [-_.] runs, but the raw name must still be a non-empty run
+    # of letters/digits/.-_ that starts and ends alphanumerically (PEP 503).
+    if args.dist is not None and not re.match(
+        r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$", args.dist
+    ):
+        raise GuildError(
+            code=EXIT_USER_ERROR,
+            message=f"--dist {args.dist!r} is not a valid PyPI distribution name",
+            remediation=(
+                "use letters/digits/.-_ starting and ending alphanumerically " "(e.g. 'jetson-cli')"
+            ),
+        )
+
     # Resolve workspace root (parent of guildmaster if not supplied).
     workspace_root = args.workspace_root if args.workspace_root is not None else root.parent
     clone_dest = workspace_root / bare
 
     # Build the dry-run plan (pure — no writes, no subprocess).
-    plan = _transform_plan(bare, args.desc)
+    plan = _transform_plan(bare, args.desc, dist=args.dist)
 
     # Ledger diff (pure — reads only).
     skills = _broadcast.canonical_skills(root)
@@ -171,6 +197,7 @@ def _handle(args: argparse.Namespace) -> None:
         clone_dest=clone_dest,
         guildmaster_root=root,
         template=args.template,
+        dist=args.dist,
     )
 
     # Register in the ledger idempotently.
@@ -186,6 +213,7 @@ def _handle(args: argparse.Namespace) -> None:
         "repo": apply_result["repo"],
         "clone_dest": apply_result["clone_dest"],
         "pushed": apply_result["pushed"],
+        "dist": plan["dist"],
         "ledger_written": ledger_written,
     }
     emit_result(json.dumps(result, indent=2) if args.json else _render_apply(result))
@@ -207,6 +235,8 @@ def _render_dry_run(result: dict) -> str:
         f"  clone dest : {result['clone_dest']}",
         f"  pkg        : {plan['pkg']}",
         f"  repo token : {plan['repo_token']}",
+        f"  dist (PyPI): {plan['dist']}"
+        + ("" if plan["dist"] == plan["repo_token"] else "  (command + import stay repo token)"),
         "",
         "── rename map ──",
     ]

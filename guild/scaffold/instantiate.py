@@ -95,7 +95,7 @@ def rename_map(bare: str) -> dict[str, str]:
     return {_TEMPLATE_PKG: pkg, _TEMPLATE_REPO: repo_token}
 
 
-def transform_plan(bare: str, desc: str) -> dict:
+def transform_plan(bare: str, desc: str, dist: str | None = None) -> dict:
     """Return a human/JSON-renderable description of what ``transform_clone`` would do.
 
     Parameters
@@ -104,6 +104,13 @@ def transform_plan(bare: str, desc: str) -> dict:
         The bare repo/agent name.
     desc:
         The short description for the new agent.
+    dist:
+        The PyPI distribution name to set. ``None`` (the default) means leave it
+        as the global-replace result (``repo_token``) — the pure default. When it
+        differs from ``repo_token``, an extra retarget step renames just the dist
+        (``[project].name``, the ``importlib.metadata`` lookup, and the TestPyPI
+        install pin); the importable package and the console command stay
+        ``repo_token``.
 
     Returns
     -------
@@ -111,10 +118,12 @@ def transform_plan(bare: str, desc: str) -> dict:
         ``rename_map``           — ``{old: new}`` substitution pairs
         ``package_dir_rename``   — ``{old_dir: new_dir}``
         ``pyproject_desc``       — the value that would be written to ``description``
+        ``dist``                 — the effective distribution name
         ``claude_md_seed``       — the first ~3 lines of the seed (synopsis only)
         ``steps``                — ordered list of step descriptions
     """
     pkg, repo_token = _derive(bare)
+    effective_dist = dist if dist else repo_token
     m = rename_map(bare)
     steps = [
         f"global text replace in every file (skip .git/): "
@@ -124,6 +133,12 @@ def transform_plan(bare: str, desc: str) -> dict:
         "replace README.md first heading + intro with new agent name and description",
         "overwrite CLAUDE.md with a self-init seed (names agent, embeds desc, /init instruction)",
     ]
+    if effective_dist != repo_token:
+        steps.append(
+            f"retarget PyPI distribution name {repo_token!r} → {effective_dist!r} "
+            "([project].name, importlib.metadata lookup, TestPyPI install pin); "
+            f"command + import package stay {repo_token!r}"
+        )
     return {
         "bare": bare,
         "pkg": pkg,
@@ -131,6 +146,7 @@ def transform_plan(bare: str, desc: str) -> dict:
         "rename_map": m,
         "package_dir_rename": {_TEMPLATE_PKG: pkg},
         "pyproject_desc": desc,
+        "dist": effective_dist,
         "claude_md_seed_synopsis": f"# CLAUDE.md seed for {bare} — run /init to expand",
         "steps": steps,
     }
@@ -258,6 +274,70 @@ def _set_pyproject_description(pyproject: Path, desc: str) -> None:
         pyproject.write_text(new_text, encoding="utf-8")
 
 
+def _retarget_dist(dest: Path, pkg: str, repo_token: str, dist: str) -> None:
+    """Rename only the PyPI **distribution** from *repo_token* to *dist*.
+
+    Called after the global token replace has set every ``culture-agent-template``
+    occurrence to *repo_token*. This narrowly rewrites the three places that name
+    the *distribution* (as opposed to the importable package or the console
+    command, which stay *repo_token*):
+
+    1. ``pyproject.toml`` — the ``[project].name = "<repo_token>"`` line.
+    2. ``<pkg>/__init__.py`` — the ``importlib.metadata`` version lookup argument
+       (the ``"<repo_token>"`` string literal).
+    3. ``.github/workflows/publish.yml`` — the TestPyPI install hint's version
+       pin (``<repo_token>==`` → ``<dist>==``).
+
+    Each step degrades gracefully if the file or the expected pattern is absent,
+    so a template that lays these out differently is left as-is rather than
+    corrupted. No-op is the caller's responsibility (skip when ``dist`` equals
+    ``repo_token``).
+    """
+    # 1. pyproject [project].name — match only the line whose value is repo_token,
+    #    so authors `{name = "..."}` and other `name =` lines are never touched.
+    pyproject = dest / "pyproject.toml"
+    if pyproject.is_file():
+        try:
+            text = pyproject.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = None
+        if text is not None:
+            new_text = re.sub(
+                r'(?m)^(\s*name\s*=\s*)["\']' + re.escape(repo_token) + r'["\']',
+                lambda m: m.group(1) + '"' + dist + '"',
+                text,
+            )
+            if new_text != text:
+                pyproject.write_text(new_text, encoding="utf-8")
+
+    # 2. <pkg>/__init__.py — the metadata lookup argument string literal.
+    init_py = dest / pkg / "__init__.py"
+    if init_py.is_file():
+        try:
+            text = init_py.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = None
+        if text is not None:
+            new_text = text.replace(f'"{repo_token}"', f'"{dist}"').replace(
+                f"'{repo_token}'", f"'{dist}'"
+            )
+            if new_text != text:
+                init_py.write_text(new_text, encoding="utf-8")
+
+    # 3. publish.yml — the TestPyPI install pin (`<repo_token>==`). The `==`
+    #    anchors it to a version pin so other repo_token mentions are untouched.
+    publish = dest / ".github" / "workflows" / "publish.yml"
+    if publish.is_file():
+        try:
+            text = publish.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = None
+        if text is not None:
+            new_text = text.replace(f"{repo_token}==", f"{dist}==")
+            if new_text != text:
+                publish.write_text(new_text, encoding="utf-8")
+
+
 def _is_desc_stub(line: str) -> bool:
     """Return True if *line* looks like a short plain-text description placeholder.
 
@@ -380,6 +460,7 @@ def transform_clone(
     bare: str,
     desc: str,
     backend: str = "claude",
+    dist: str | None = None,
 ) -> None:
     """Customise the cloned template tree at *dest* into the new agent *bare*.
 
@@ -392,6 +473,10 @@ def transform_clone(
     3. **Set description** in ``pyproject.toml``.
     4. **Rewrite README.md** first heading + intro.
     5. **Overwrite CLAUDE.md** (or ``AGENTS.md`` for acp) with a self-init seed.
+    6. **Retarget the PyPI dist name** to *dist* (only when it differs from
+       ``repo_token``) — ``[project].name``, the ``importlib.metadata`` lookup,
+       and the TestPyPI install pin. The importable package and the console
+       command stay ``repo_token``.
 
     Parameters
     ----------
@@ -403,6 +488,9 @@ def transform_clone(
         Short description for the new agent.
     backend:
         ``"claude"`` (default) or ``"acp"``.
+    dist:
+        PyPI distribution name. ``None`` leaves it as ``repo_token`` (the pure
+        default); a different value retargets only the dist (step 6).
 
     Raises
     ------
@@ -418,7 +506,7 @@ def transform_clone(
     if not dest.is_dir():
         raise FileNotFoundError(f"dest is not a directory: {dest}")
 
-    pkg, _ = _derive(bare)
+    pkg, repo_token = _derive(bare)
     replacements = rename_map(bare)  # underscore first, then hyphen
 
     # Step 1 — global text replace (visit all files before the directory rename
@@ -442,3 +530,8 @@ def transform_clone(
     prompt_file = _BACKEND_PROMPT_FILE[backend]
     seed_content = _seed_prompt(bare, desc, backend)
     (dest / prompt_file).write_text(seed_content, encoding="utf-8")
+
+    # Step 6 — retarget the PyPI dist name (only when it differs from repo_token,
+    # so the default is a true no-op and the bare-name case is unchanged).
+    if dist and dist != repo_token:
+        _retarget_dist(dest, pkg, repo_token, dist)
