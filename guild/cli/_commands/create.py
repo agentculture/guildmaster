@@ -149,7 +149,7 @@ def _handle(args: argparse.Namespace) -> None:
             code=EXIT_USER_ERROR,
             message=f"--dist {args.dist!r} is not a valid PyPI distribution name",
             remediation=(
-                "use letters/digits/.-_ starting and ending alphanumerically " "(e.g. 'jetson-cli')"
+                "use letters/digits/.-_ starting and ending alphanumerically (e.g. 'jetson-cli')"
             ),
         )
 

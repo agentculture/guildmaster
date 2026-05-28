@@ -10,12 +10,13 @@ rename_map(bare) -> dict[str, str]
     The two identifier substitutions: ``culture_agent_template`` → ``pkg`` and
     ``culture-agent-template`` → ``repo_token``.  Pure function; no I/O.
 
-transform_plan(bare, desc) -> dict
+transform_plan(bare, desc, dist=None) -> dict
     A human/JSON-renderable description of what ``transform_clone`` WOULD do
     (the rename map, package directory rename, pyproject description, README
-    headline change, and CLAUDE.md seed replacement).  No I/O.
+    headline change, CLAUDE.md seed replacement, and — when *dist* differs from
+    the repo token — the dist-name retarget).  No I/O.
 
-transform_clone(dest, bare, desc, backend) -> None
+transform_clone(dest, bare, desc, backend, dist=None) -> None
     The actual, irreversible in-place transform.  Walks *dest*, skipping
     ``.git/``:
     1. Global text replace across every file: ``culture_agent_template`` → pkg,
@@ -29,6 +30,14 @@ transform_clone(dest, bare, desc, backend) -> None
     5. Overwrite ``CLAUDE.md`` with a self-init seed (prompt-file-present +
        backend-consistency compliant; carries an explicit ``/init`` re-init
        instruction; names the agent, embeds *desc*, uses *backend*).
+    6. **Only when** *dist* is given and differs from the repo token: retarget
+       the PyPI distribution name in the three places that name the *dist* (not
+       the import package or the console command) — ``[project].name``, the
+       ``importlib.metadata`` lookup, and the TestPyPI install pin.
+
+    *dist* ``None`` means "leave the dist as the repo token" (the default). An
+    explicitly empty/whitespace *dist* is rejected (``ValueError``) so a stray
+    programmatic ``""`` is not silently treated as "unset".
 
 This module is PURE w.r.t. the filesystem: it only writes within *dest*, and
 only after the caller hands it a real directory.  No subprocess, no network.
@@ -39,6 +48,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Callable
 
 # ---------------------------------------------------------------------------
 # Identifier derivation
@@ -68,6 +78,21 @@ def _derive(bare: str) -> tuple[str, str]:
     repo_token = bare.lower()
     pkg = repo_token.replace("-", "_")
     return pkg, repo_token
+
+
+def _effective_dist(dist: str | None, repo_token: str) -> str:
+    """Resolve the distribution name, distinguishing ``None`` from ``""``.
+
+    ``None`` means "not provided" → default to *repo_token*. An explicitly
+    empty or whitespace-only *dist* is a programming error (the CLI rejects it
+    before this point) and raises ``ValueError`` rather than silently defaulting,
+    so plan and transform reason identically about their inputs.
+    """
+    if dist is None:
+        return repo_token
+    if not dist.strip():
+        raise ValueError("dist must be a non-empty string or None")
+    return dist
 
 
 # ---------------------------------------------------------------------------
@@ -123,7 +148,7 @@ def transform_plan(bare: str, desc: str, dist: str | None = None) -> dict:
         ``steps``                — ordered list of step descriptions
     """
     pkg, repo_token = _derive(bare)
-    effective_dist = dist if dist else repo_token
+    effective_dist = _effective_dist(dist, repo_token)
     m = rename_map(bare)
     steps = [
         f"global text replace in every file (skip .git/): "
@@ -274,6 +299,23 @@ def _set_pyproject_description(pyproject: Path, desc: str) -> None:
         pyproject.write_text(new_text, encoding="utf-8")
 
 
+def _rewrite_text_file(path: Path, transform: Callable[[str], str]) -> None:
+    """Read *path*, apply *transform* to its text, and write back if it changed.
+
+    Degrades gracefully: a missing or non-UTF-8 file is left untouched. Centralises
+    the read/guard/write boilerplate so callers describe only the substitution.
+    """
+    if not path.is_file():
+        return
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return
+    new_text = transform(text)
+    if new_text != text:
+        path.write_text(new_text, encoding="utf-8")
+
+
 def _retarget_dist(dest: Path, pkg: str, repo_token: str, dist: str) -> None:
     """Rename only the PyPI **distribution** from *repo_token* to *dist*.
 
@@ -282,60 +324,34 @@ def _retarget_dist(dest: Path, pkg: str, repo_token: str, dist: str) -> None:
     the *distribution* (as opposed to the importable package or the console
     command, which stay *repo_token*):
 
-    1. ``pyproject.toml`` — the ``[project].name = "<repo_token>"`` line.
+    1. ``pyproject.toml`` — the ``[project].name = "<repo_token>"`` line (matched
+       by value, so ``authors = [{name = "..."}]`` and other ``name =`` lines are
+       never touched).
     2. ``<pkg>/__init__.py`` — the ``importlib.metadata`` version lookup argument
        (the ``"<repo_token>"`` string literal).
     3. ``.github/workflows/publish.yml`` — the TestPyPI install hint's version
-       pin (``<repo_token>==`` → ``<dist>==``).
+       pin (``<repo_token>==`` → ``<dist>==``; the ``==`` anchors it so other
+       ``repo_token`` mentions are untouched).
 
-    Each step degrades gracefully if the file or the expected pattern is absent,
-    so a template that lays these out differently is left as-is rather than
-    corrupted. No-op is the caller's responsibility (skip when ``dist`` equals
-    ``repo_token``).
+    Each step degrades gracefully if the file or pattern is absent. No-op is the
+    caller's responsibility (skip when ``dist`` equals ``repo_token``).
     """
-    # 1. pyproject [project].name — match only the line whose value is repo_token,
-    #    so authors `{name = "..."}` and other `name =` lines are never touched.
-    pyproject = dest / "pyproject.toml"
-    if pyproject.is_file():
-        try:
-            text = pyproject.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            text = None
-        if text is not None:
-            new_text = re.sub(
-                r'(?m)^(\s*name\s*=\s*)["\']' + re.escape(repo_token) + r'["\']',
-                lambda m: m.group(1) + '"' + dist + '"',
-                text,
-            )
-            if new_text != text:
-                pyproject.write_text(new_text, encoding="utf-8")
+    name_line = re.compile(r'(?m)^(\s*name\s*=\s*)["\']' + re.escape(repo_token) + r'["\']')
 
-    # 2. <pkg>/__init__.py — the metadata lookup argument string literal.
-    init_py = dest / pkg / "__init__.py"
-    if init_py.is_file():
-        try:
-            text = init_py.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            text = None
-        if text is not None:
-            new_text = text.replace(f'"{repo_token}"', f'"{dist}"').replace(
-                f"'{repo_token}'", f"'{dist}'"
-            )
-            if new_text != text:
-                init_py.write_text(new_text, encoding="utf-8")
-
-    # 3. publish.yml — the TestPyPI install pin (`<repo_token>==`). The `==`
-    #    anchors it to a version pin so other repo_token mentions are untouched.
-    publish = dest / ".github" / "workflows" / "publish.yml"
-    if publish.is_file():
-        try:
-            text = publish.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            text = None
-        if text is not None:
-            new_text = text.replace(f"{repo_token}==", f"{dist}==")
-            if new_text != text:
-                publish.write_text(new_text, encoding="utf-8")
+    _rewrite_text_file(
+        dest / "pyproject.toml",
+        lambda text: name_line.sub(lambda m: m.group(1) + '"' + dist + '"', text),
+    )
+    _rewrite_text_file(
+        dest / pkg / "__init__.py",
+        lambda text: text.replace(f'"{repo_token}"', f'"{dist}"').replace(
+            f"'{repo_token}'", f"'{dist}'"
+        ),
+    )
+    _rewrite_text_file(
+        dest / ".github" / "workflows" / "publish.yml",
+        lambda text: text.replace(f"{repo_token}==", f"{dist}=="),
+    )
 
 
 def _is_desc_stub(line: str) -> bool:
@@ -507,6 +523,9 @@ def transform_clone(
         raise FileNotFoundError(f"dest is not a directory: {dest}")
 
     pkg, repo_token = _derive(bare)
+    # Resolve the dist up front so an explicitly-empty value is rejected before
+    # any file is touched (None → repo_token; "" / whitespace → ValueError).
+    effective_dist = _effective_dist(dist, repo_token)
     replacements = rename_map(bare)  # underscore first, then hyphen
 
     # Step 1 — global text replace (visit all files before the directory rename
@@ -533,5 +552,5 @@ def transform_clone(
 
     # Step 6 — retarget the PyPI dist name (only when it differs from repo_token,
     # so the default is a true no-op and the bare-name case is unchanged).
-    if dist and dist != repo_token:
-        _retarget_dist(dest, pkg, repo_token, dist)
+    if effective_dist != repo_token:
+        _retarget_dist(dest, pkg, repo_token, effective_dist)

@@ -473,6 +473,18 @@ def test_transform_plan_includes_dist_custom(tmp_path):
     assert any("retarget" in s.lower() and "appsec-cli" in s for s in plan["steps"])
 
 
+def test_transform_clone_empty_dist_raises(tmp_path):
+    """An explicitly-empty dist is a programming error, not "use the default"."""
+    dest = _build_fixture(tmp_path)
+    with pytest.raises(ValueError, match="dist"):
+        transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="")
+
+
+def test_transform_plan_whitespace_dist_raises():
+    with pytest.raises(ValueError, match="dist"):
+        transform_plan("appsec", "AppSec agent.", dist="   ")
+
+
 def test_transform_seed_avoids_md036_standalone_emphasis(tmp_path):
     """The CLAUDE.md seed must not place the agent name on a standalone
     emphasized line (markdownlint MD036 no-emphasis-as-heading — this broke
