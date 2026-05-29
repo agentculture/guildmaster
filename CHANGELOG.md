@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-05-30
+
+### Added
+
+- **`guild create`: repo≠command split via `--command` / `--pkg`**
+  ([#43](https://github.com/agentculture/guildmaster/issues/43)). A new sibling
+  can now ship its CLI under a shorter name than the repo — the guildmaster
+  pattern (repo `guildmaster` → command/package `guild` → dist `guild-cli`) —
+  without a manual post-create edit.
+  - `--command NAME` sets the console-command (binary) name (default: the repo
+    token) and retargets **only** the `[project.scripts]` entry-point key.
+  - `--pkg NAME` sets the importable Python package (default: the underscore
+    form of `--command`, so command + import package stay in lock-step); pass it
+    only to decouple the two.
+  - The **repo token stays the repo/agent identity** (README heading,
+    `culture.yaml` suffix, CLAUDE.md seed, repo URL). `--command` / `--pkg` /
+    `--dist` are each independent; with no overrides the output is byte-identical
+    to before.
+  - Validation is fail-fast (before any external act): `--command` must be a PEP
+    503-ish name and the *effective* import package must be a valid, non-keyword
+    Python identifier (the error attributes the bad value to `--pkg`, else
+    `--command`, else the repo name).
+  - A `--dist`/`--command` rename still does **not** register a PyPI/TestPyPI
+    Trusted Publisher — `guild create` configures only the GitHub side.
+  - Pure transform: new `_resolve_identifiers` (single source of truth shared by
+    `transform_plan` / `transform_clone`) and `_retarget_command` (narrow
+    scripts-key rewrite, mirroring `_retarget_dist`).
+
+### Changed
+
+### Fixed
+
 ## [0.7.3] - 2026-05-29
 
 ### Added

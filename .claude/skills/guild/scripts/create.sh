@@ -12,12 +12,20 @@ set -euo pipefail
 # Usage:
 #   create.sh --agent OWNER/REPO --desc TEXT [--backend claude|acp]
 #             [--workspace-root DIR] [--template OWNER/REPO]
-#             [--org agentculture] [--dist NAME] [--apply] [--json]
+#             [--org agentculture] [--command NAME] [--pkg NAME]
+#             [--dist NAME] [--apply] [--json]
 #
-# --dist NAME sets the PyPI distribution name (default: the repo name); pass
-#   e.g. --dist jetson-cli to ship the dist as jetson-cli while keeping the
-#   command + import package as the repo name. Retargets [project].name, the
-#   importlib.metadata lookup, and the TestPyPI install pin.
+# The repo name is the repo/agent identity (README, culture.yaml suffix,
+# CLAUDE.md seed, repo URL). --command / --pkg / --dist each retarget one facet
+# independently and default to the repo name (or, for --pkg, the underscore form
+# of --command), so with no overrides the result is identical to before:
+#   --command NAME  console-command name (the [project.scripts] key only); e.g.
+#                   --command reachy for a repo reachy-mini-cli.
+#   --pkg NAME      importable package; defaults to the underscore form of
+#                   --command (pass only to decouple command from package).
+#   --dist NAME     PyPI distribution name; e.g. --dist jetson-cli. Retargets
+#                   [project].name, the importlib.metadata lookup, and the
+#                   TestPyPI install pin.
 #
 # Exit codes:
 #   0   success (delegates to `guild create`; its exit code propagates)

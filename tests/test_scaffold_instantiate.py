@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from guild.scaffold.instantiate import (
+    _resolve_identifiers,
     rename_map,
     transform_clone,
     transform_plan,
@@ -483,6 +484,202 @@ def test_transform_clone_empty_dist_raises(tmp_path):
 def test_transform_plan_whitespace_dist_raises():
     with pytest.raises(ValueError, match="dist"):
         transform_plan("appsec", "AppSec agent.", dist="   ")
+
+
+# ---------------------------------------------------------------------------
+# _resolve_identifiers — the shared resolver
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_identifiers_defaults():
+    """No overrides → legacy behaviour (pkg = underscore of repo; all = repo)."""
+    eff_pkg, repo_token, eff_command, eff_dist = _resolve_identifiers("my-agent")
+    assert (eff_pkg, repo_token, eff_command, eff_dist) == (
+        "my_agent",
+        "my-agent",
+        "my-agent",
+        "my-agent",
+    )
+
+
+def test_resolve_identifiers_command_only_pkg_follows_command():
+    """--command alone also moves the import package (underscore of command)."""
+    eff_pkg, repo_token, eff_command, eff_dist = _resolve_identifiers(
+        "reachy-mini-cli", command="reachy"
+    )
+    assert eff_command == "reachy"
+    assert eff_pkg == "reachy"  # underscore form of the command, NOT the repo
+    assert repo_token == "reachy-mini-cli"
+    assert eff_dist == "reachy-mini-cli"
+
+
+def test_resolve_identifiers_pkg_decouples_from_command():
+    """--pkg overrides the package without touching the command."""
+    eff_pkg, repo_token, eff_command, eff_dist = _resolve_identifiers(
+        "reachy-mini-cli", pkg="myimport", command="reachy"
+    )
+    assert eff_command == "reachy"
+    assert eff_pkg == "myimport"
+
+
+def test_resolve_identifiers_full_split():
+    eff_pkg, repo_token, eff_command, eff_dist = _resolve_identifiers(
+        "reachy-mini-cli", command="reachy", dist="reachy-cli"
+    )
+    assert (eff_pkg, repo_token, eff_command, eff_dist) == (
+        "reachy",
+        "reachy-mini-cli",
+        "reachy",
+        "reachy-cli",
+    )
+
+
+def test_resolve_identifiers_empty_command_raises():
+    with pytest.raises(ValueError, match="command"):
+        _resolve_identifiers("appsec", command="")
+
+
+def test_resolve_identifiers_empty_pkg_raises():
+    with pytest.raises(ValueError, match="pkg"):
+        _resolve_identifiers("appsec", pkg="  ")
+
+
+# ---------------------------------------------------------------------------
+# rename_map with a custom pkg
+# ---------------------------------------------------------------------------
+
+
+def test_rename_map_custom_pkg():
+    m = rename_map("reachy-mini-cli", pkg="reachy")
+    assert m["culture_agent_template"] == "reachy"
+    assert m["culture-agent-template"] == "reachy-mini-cli"
+
+
+# ---------------------------------------------------------------------------
+# transform_plan — command / pkg
+# ---------------------------------------------------------------------------
+
+
+def test_transform_plan_command_default_no_retarget_step():
+    plan = transform_plan("appsec", "AppSec agent.")
+    assert plan["command"] == "appsec"
+    assert not any("retarget console command" in s for s in plan["steps"])
+
+
+def test_transform_plan_command_custom_adds_step():
+    plan = transform_plan("reachy-mini-cli", "Robot agent.", command="reachy")
+    assert plan["command"] == "reachy"
+    assert plan["pkg"] == "reachy"
+    assert any("retarget console command" in s and "reachy" in s for s in plan["steps"])
+
+
+def test_transform_plan_pkg_custom_reflected():
+    plan = transform_plan("reachy-mini-cli", "Robot agent.", command="reachy", pkg="myimport")
+    assert plan["pkg"] == "myimport"
+    # The global-replace + dir-rename steps name the custom package.
+    assert any("myimport" in s for s in plan["steps"])
+
+
+def test_transform_plan_full_split():
+    plan = transform_plan("reachy-mini-cli", "Robot agent.", command="reachy", dist="reachy-cli")
+    assert plan["repo_token"] == "reachy-mini-cli"
+    assert plan["command"] == "reachy"
+    assert plan["pkg"] == "reachy"
+    assert plan["dist"] == "reachy-cli"
+    assert any("retarget console command" in s for s in plan["steps"])
+    assert any("retarget PyPI distribution" in s for s in plan["steps"])
+
+
+# ---------------------------------------------------------------------------
+# transform_clone — command / pkg retargets
+# ---------------------------------------------------------------------------
+
+
+def test_transform_command_only_retargets_scripts_key(tmp_path):
+    """--command rewrites only the [project.scripts] key; pkg follows command."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "reachy-mini-cli", "Robot agent.", "claude", command="reachy")
+    pyproject = (dest / "pyproject.toml").read_text()
+    # Command key is the custom command; module path uses the package (= command).
+    assert 'reachy = "reachy.cli:main"' in pyproject
+    # [project].name stays the repo identity (no --dist).
+    assert 'name = "reachy-mini-cli"' in pyproject
+    # Package dir + packages list follow the command (underscore form).
+    assert (dest / "reachy").is_dir()
+    assert 'packages = ["reachy"]' in pyproject
+
+
+def test_transform_command_only_keeps_repo_identity(tmp_path):
+    """README heading, culture.yaml suffix, and the seed stay the repo token."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "reachy-mini-cli", "Robot agent.", "claude", command="reachy")
+    assert "# reachy-mini-cli" in (dest / "README.md").read_text()
+    assert "suffix: reachy-mini-cli" in (dest / "culture.yaml").read_text()
+    claude_md = (dest / "CLAUDE.md").read_text()
+    assert "reachy-mini-cli" in claude_md
+
+
+def test_transform_pkg_only_renames_package_not_command(tmp_path):
+    """--pkg moves the import package; the command + dist stay the repo token."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude", pkg="appsec_core")
+    assert (dest / "appsec_core").is_dir()
+    assert not (dest / "appsec").exists()
+    pyproject = (dest / "pyproject.toml").read_text()
+    # Command key stays the repo token; module path uses the custom package.
+    assert 'appsec = "appsec_core.cli:main"' in pyproject
+    assert 'packages = ["appsec_core"]' in pyproject
+    assert 'name = "appsec"' in pyproject  # dist unchanged
+    init = (dest / "appsec_core" / "__init__.py").read_text()
+    assert "from appsec_core import cli" in init
+
+
+def test_transform_full_split_reachy(tmp_path):
+    """The first intended use: repo reachy-mini-cli / command+pkg reachy / dist reachy-cli."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(
+        dest,
+        "reachy-mini-cli",
+        "Robot agent.",
+        "claude",
+        command="reachy",
+        dist="reachy-cli",
+    )
+    pyproject = (dest / "pyproject.toml").read_text()
+    assert 'name = "reachy-cli"' in pyproject  # dist
+    assert 'reachy = "reachy.cli:main"' in pyproject  # command key + pkg value
+    assert 'packages = ["reachy"]' in pyproject  # import package
+    assert (dest / "reachy").is_dir()
+    init = (dest / "reachy" / "__init__.py").read_text()
+    assert '_pkg_version("reachy-cli")' in init  # metadata lookup = dist
+    wf = (dest / ".github" / "workflows" / "publish.yml").read_text()
+    assert "reachy-cli==${DEV_VERSION}" in wf  # publish pin = dist
+    # Identity stays the repo token.
+    assert "# reachy-mini-cli" in (dest / "README.md").read_text()
+    assert "suffix: reachy-mini-cli" in (dest / "culture.yaml").read_text()
+
+
+def test_transform_no_overrides_byte_identical_to_legacy(tmp_path):
+    """No command/pkg/dist overrides → the legacy single-token result."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "my-agent", "Hyphenated.", "claude")
+    pyproject = (dest / "pyproject.toml").read_text()
+    assert 'name = "my-agent"' in pyproject
+    assert 'my-agent = "my_agent.cli:main"' in pyproject
+    assert 'packages = ["my_agent"]' in pyproject
+    assert (dest / "my_agent").is_dir()
+
+
+def test_transform_clone_empty_command_raises(tmp_path):
+    dest = _build_fixture(tmp_path)
+    with pytest.raises(ValueError, match="command"):
+        transform_clone(dest, "appsec", "AppSec agent.", "claude", command="")
+
+
+def test_transform_clone_empty_pkg_raises(tmp_path):
+    dest = _build_fixture(tmp_path)
+    with pytest.raises(ValueError, match="pkg"):
+        transform_clone(dest, "appsec", "AppSec agent.", "claude", pkg="   ")
 
 
 def test_transform_seed_avoids_md036_standalone_emphasis(tmp_path):

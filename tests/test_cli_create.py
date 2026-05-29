@@ -189,6 +189,104 @@ def test_create_rejects_invalid_dist_name(tmp_path, monkeypatch, capsys):
     assert "not a valid PyPI distribution name" in capsys.readouterr().err
 
 
+def test_create_dry_run_command_flag(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(
+        ["create", "--agent", "reachy-mini-cli", "--desc", "D.", "--command", "reachy", "--json"]
+    )
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)["plan"]
+    assert out["command"] == "reachy"
+    assert out["pkg"] == "reachy"  # package follows the command
+    assert out["repo_token"] == "reachy-mini-cli"
+    assert any("retarget console command" in s for s in out["steps"])
+
+
+def test_create_dry_run_pkg_flag(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(
+        [
+            "create",
+            "--agent",
+            "reachy-mini-cli",
+            "--desc",
+            "D.",
+            "--command",
+            "reachy",
+            "--pkg",
+            "reachy_robot",
+            "--json",
+        ]
+    )
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)["plan"]
+    assert out["command"] == "reachy"
+    assert out["pkg"] == "reachy_robot"  # decoupled from the command
+
+
+def test_create_dry_run_full_split(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(
+        [
+            "create",
+            "--agent",
+            "reachy-mini-cli",
+            "--desc",
+            "D.",
+            "--command",
+            "reachy",
+            "--dist",
+            "reachy-cli",
+            "--json",
+        ]
+    )
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)["plan"]
+    assert out["repo_token"] == "reachy-mini-cli"
+    assert out["command"] == "reachy"
+    assert out["pkg"] == "reachy"
+    assert out["dist"] == "reachy-cli"
+
+
+def test_create_dry_run_no_overrides_command_equals_repo(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(["create", "--agent", "my-agent", "--desc", "D.", "--json"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)["plan"]
+    assert out["command"] == "my-agent"
+    assert out["pkg"] == "my_agent"
+    assert not any("retarget console command" in s for s in out["steps"])
+
+
+def test_create_rejects_invalid_command_name(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    rc = main(["create", "--agent", "newsib", "--desc", "D.", "--command", "bad name!"])
+    assert rc != 0
+    assert "not a valid command name" in capsys.readouterr().err
+
+
+def test_create_rejects_invalid_pkg_name(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(_seed(tmp_path))
+    monkeypatch.setattr(subprocess, "run", _never_called)
+
+    # A leading digit is not a valid Python identifier; error attributes to --pkg.
+    rc = main(["create", "--agent", "newsib", "--desc", "D.", "--pkg", "2bad"])
+    assert rc != 0
+    err = capsys.readouterr().err
+    assert "invalid Python package name" in err
+    assert "--pkg" in err
+
+
 def test_create_dry_run_bare_agent_gets_org(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(_seed(tmp_path))
 
@@ -717,3 +815,120 @@ def test_create_apply_dist_retargets_clone(tmp_path, monkeypatch):
     assert '_pkg_version("newsib-cli")' in init
     wf = (clone_dest / ".github" / "workflows" / "publish.yml").read_text()
     assert "newsib-cli==${DEV_VERSION}" in wf
+
+
+def test_create_apply_command_retargets_clone(tmp_path, monkeypatch):
+    """--apply with --command renames the console command (and package follows it)."""
+    root = _seed(tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    monkeypatch.chdir(root)
+
+    runner = _FakeRunner()
+    import guild.cli._commands._provision_template as _prov
+
+    monkeypatch.setattr(_prov, "default_runner", runner)
+
+    main(
+        [
+            "create",
+            "--agent",
+            "newsib",
+            "--desc",
+            "Command test.",
+            "--workspace-root",
+            str(workspace),
+            "--command",
+            "mycmd",
+            "--apply",
+        ]
+    )
+
+    clone_dest = workspace / "newsib"
+    pyproject = (clone_dest / "pyproject.toml").read_text()
+    # Command key + package both follow --command; dist (name) stays the repo.
+    assert 'mycmd = "mycmd.cli:main"' in pyproject
+    assert 'name = "newsib"' in pyproject
+    assert (clone_dest / "mycmd").is_dir()
+    # Repo identity (culture.yaml suffix) stays the repo token.
+    assert "suffix: newsib" in (clone_dest / "culture.yaml").read_text()
+
+
+def test_create_apply_pkg_retargets_clone(tmp_path, monkeypatch):
+    """--apply with --pkg renames only the import package; command stays the repo."""
+    root = _seed(tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    monkeypatch.chdir(root)
+
+    runner = _FakeRunner()
+    import guild.cli._commands._provision_template as _prov
+
+    monkeypatch.setattr(_prov, "default_runner", runner)
+
+    main(
+        [
+            "create",
+            "--agent",
+            "newsib",
+            "--desc",
+            "Pkg test.",
+            "--workspace-root",
+            str(workspace),
+            "--pkg",
+            "newsib_core",
+            "--apply",
+        ]
+    )
+
+    clone_dest = workspace / "newsib"
+    assert (clone_dest / "newsib_core").is_dir()
+    assert not (clone_dest / "newsib").exists()
+    pyproject = (clone_dest / "pyproject.toml").read_text()
+    # Command key stays the repo token; the module path uses the custom package.
+    assert 'newsib = "newsib_core.cli:main"' in pyproject
+    # The global replace rewrote the package's own contents to the custom name.
+    init = (clone_dest / "newsib_core" / "__init__.py").read_text()
+    assert "# newsib_core" in init
+
+
+def test_create_apply_full_split_clone(tmp_path, monkeypatch):
+    """The first intended use end-to-end: reachy-mini-cli / reachy / reachy-cli."""
+    root = _seed(tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    monkeypatch.chdir(root)
+
+    runner = _FakeRunner()
+    import guild.cli._commands._provision_template as _prov
+
+    monkeypatch.setattr(_prov, "default_runner", runner)
+
+    main(
+        [
+            "create",
+            "--agent",
+            "reachy-mini-cli",
+            "--desc",
+            "Robot agent.",
+            "--workspace-root",
+            str(workspace),
+            "--command",
+            "reachy",
+            "--dist",
+            "reachy-cli",
+            "--apply",
+        ]
+    )
+
+    clone_dest = workspace / "reachy-mini-cli"
+    pyproject = (clone_dest / "pyproject.toml").read_text()
+    assert 'name = "reachy-cli"' in pyproject  # dist
+    assert 'reachy = "reachy.cli:main"' in pyproject  # command key + package value
+    assert (clone_dest / "reachy").is_dir()  # import package
+    init = (clone_dest / "reachy" / "__init__.py").read_text()
+    assert '_pkg_version("reachy-cli")' in init  # metadata lookup = dist
+    wf = (clone_dest / ".github" / "workflows" / "publish.yml").read_text()
+    assert "reachy-cli==${DEV_VERSION}" in wf  # publish pin = dist
+    # Repo identity stays the repo token.
+    assert "suffix: reachy-mini-cli" in (clone_dest / "culture.yaml").read_text()
