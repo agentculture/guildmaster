@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-05-29
+
+### Added
+
+- **SonarCloud coverage wiring** — committed `sonar-project.properties`
+  (`agentculture_guildmaster`, `sonar.python.coverage.reportPaths=coverage.xml`,
+  `sonar.qualitygate.wait=true`). CI already produced `coverage.xml`
+  (`--cov=guild --cov-report=xml:coverage.xml`) but the SonarCloud scan was
+  gated off because the config file was absent — guildmaster was the only repo
+  in the fleet without it. The project is already provisioned on SonarCloud, so
+  this activates the scan and feeds coverage to the quality gate.
+
+### Changed
+
+- **`tests.yml` SonarCloud Scan gate** — dropped the now-redundant
+  `hashFiles('sonar-project.properties')` clause (the file is committed) so the
+  step gates only on `env.SONAR_TOKEN != ''`, matching steward and the
+  `culture-agent-template`. Refreshed the stale "not provisioned yet" comment.
+
+### Fixed
+
 ## [0.7.0] - 2026-05-28
 
 ### Added

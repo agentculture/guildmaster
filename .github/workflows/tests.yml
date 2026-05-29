@@ -33,12 +33,11 @@ jobs:
       - run: uv run pytest -n auto --cov=guild --cov-report=xml:coverage.xml --cov-report=term -v
 
       - name: SonarCloud Scan
-        # Require BOTH the token and a committed sonar config. The org-level
-        # SONAR_TOKEN is inherited even though guildmaster isn't provisioned on
-        # SonarCloud yet; without a sonar.projectKey/organization the scanner
-        # fails (exit 3). Commit a sonar-project.properties when the project is
-        # created to activate the scan.
-        if: env.SONAR_TOKEN != '' && hashFiles('sonar-project.properties') != ''
+        # Reads sonar-project.properties (projectKey agentculture_guildmaster,
+        # coverage.xml path, qualitygate.wait). Gated only on the token so fork
+        # PRs and token-less repos skip the scan and stay green — `secrets.*`
+        # isn't allowed in `if:`, hence the job-level env promotion above.
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
         env:
           SONAR_HOST_URL: https://sonarcloud.io
