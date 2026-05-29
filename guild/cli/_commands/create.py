@@ -15,7 +15,8 @@ Usage
     guild create --agent OWNER/REPO --desc TEXT [--org agentculture]
                  [--backend claude|acp] [--workspace-root DIR]
                  [--template agentculture/culture-agent-template]
-                 [--dist NAME] [--apply] [--json]
+                 [--command NAME] [--pkg NAME] [--dist NAME]
+                 [--apply] [--json]
 """
 
 from __future__ import annotations
@@ -34,6 +35,11 @@ from guild.cli._output import emit_result
 from guild.cli._repo import repo_root
 from guild.scaffold.instantiate import transform_plan as _transform_plan
 from guild.skills import ledger as _ledger
+
+# A PEP 503-ish name: a non-empty run of letters/digits/.-_ that starts and ends
+# alphanumerically. PyPI normalises [-_.] runs, but the raw value must still look
+# like a name. Shared by the --dist and --command validators.
+_PEP503 = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
 
 
 def register(sub: argparse._SubParsersAction) -> None:
@@ -88,6 +94,30 @@ def register(sub: argparse._SubParsersAction) -> None:
         help=f"GitHub template repo to instantiate (default: {_provision.DEFAULT_TEMPLATE}).",
     )
     parser.add_argument(
+        "--command",
+        # Explicit dest: the bare "command" dest collides with the subparsers'
+        # ``dest="command"`` (which holds the chosen subcommand name).
+        dest="command_name",
+        metavar="NAME",
+        default=None,
+        help=(
+            "Console-command (binary) name. Defaults to the repo name; pass e.g. "
+            "'reachy' for a repo 'reachy-mini-cli' to ship the command as 'reachy'. "
+            "Retargets only the [project.scripts] entry-point key. The import "
+            "package follows it (underscore form) unless --pkg overrides."
+        ),
+    )
+    parser.add_argument(
+        "--pkg",
+        metavar="NAME",
+        default=None,
+        help=(
+            "Importable Python package name. Defaults to the underscore form of "
+            "--command, so command and import package stay in lock-step (like "
+            "guild/guild). Pass it only to decouple the two."
+        ),
+    )
+    parser.add_argument(
         "--dist",
         metavar="NAME",
         default=None,
@@ -115,6 +145,59 @@ def register(sub: argparse._SubParsersAction) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Validation (fail-fast, before any external act)
+# ---------------------------------------------------------------------------
+
+
+def _validate_pep503(value: str | None, flag: str, what: str, example: str) -> None:
+    """Reject *value* (when given) if it is not a PEP 503-ish name."""
+    if value is not None and not _PEP503.match(value):
+        raise GuildError(
+            code=EXIT_USER_ERROR,
+            message=f"{flag} {value!r} is not a valid {what}",
+            remediation=(
+                "use letters/digits/.-_ starting and ending alphanumerically " f"(e.g. {example!r})"
+            ),
+        )
+
+
+def _effective_pkg_for_validation(args: argparse.Namespace, repo_token: str) -> str:
+    """Mirror the resolver: the import package the transform will actually use."""
+    effective_command = args.command_name if args.command_name is not None else repo_token
+    return args.pkg if args.pkg is not None else effective_command.replace("-", "_")
+
+
+def _validate_identifiers(args: argparse.Namespace, bare: str, repo_token: str) -> None:
+    """Fail-fast validation of --command / --pkg / --dist before any external act.
+
+    The *effective* import package is both a directory name and a global rename
+    token, so an invalid value (dots, leading digit, keyword) breaks the
+    generated sibling. Attribute a bad value to --pkg, else --command, else the
+    repo name.
+    """
+    _validate_pep503(args.command_name, "--command", "command name", "reachy")
+
+    effective_pkg = _effective_pkg_for_validation(args, repo_token)
+    if not effective_pkg.isidentifier() or keyword.iskeyword(effective_pkg):
+        if args.pkg is not None:
+            source = f"--pkg {args.pkg!r}"
+        elif args.command_name is not None:
+            source = f"--command {args.command_name!r}"
+        else:
+            source = f"repo name {bare!r}"
+        raise GuildError(
+            code=EXIT_USER_ERROR,
+            message=f"{source} derives an invalid Python package name {effective_pkg!r}",
+            remediation=(
+                "the import package must be a valid, non-keyword Python identifier "
+                "(letters/digits/underscore, not starting with a digit); pass --pkg to set it"
+            ),
+        )
+
+    _validate_pep503(args.dist, "--dist", "PyPI distribution name", "jetson-cli")
+
+
+# ---------------------------------------------------------------------------
 # Handler
 # ---------------------------------------------------------------------------
 
@@ -123,42 +206,16 @@ def _handle(args: argparse.Namespace) -> None:
     root = repo_root()
     agent = _broadcast.normalize_target(args.agent, args.org)
     bare = agent.rsplit("/", 1)[-1]
+    repo_token = bare.lower()
 
-    # Fail fast (before any external act) if the repo name can't derive a valid
-    # Python package identifier — the derived pkg is both a directory name and a
-    # global rename token, so an invalid value (dots, leading digit) breaks the
-    # generated sibling.
-    pkg = bare.lower().replace("-", "_")
-    if not pkg.isidentifier() or keyword.iskeyword(pkg):
-        raise GuildError(
-            code=EXIT_USER_ERROR,
-            message=f"repo name {bare!r} derives an invalid Python package name {pkg!r}",
-            remediation=(
-                "use a repo name of letters/digits/hyphens that maps to a valid, "
-                "non-keyword Python identifier (e.g. not starting with a digit)"
-            ),
-        )
-
-    # Validate the optional PyPI dist name (fail fast, before any external act).
-    # PyPI normalises [-_.] runs, but the raw name must still be a non-empty run
-    # of letters/digits/.-_ that starts and ends alphanumerically (PEP 503).
-    if args.dist is not None and not re.match(
-        r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$", args.dist
-    ):
-        raise GuildError(
-            code=EXIT_USER_ERROR,
-            message=f"--dist {args.dist!r} is not a valid PyPI distribution name",
-            remediation=(
-                "use letters/digits/.-_ starting and ending alphanumerically (e.g. 'jetson-cli')"
-            ),
-        )
+    _validate_identifiers(args, bare, repo_token)
 
     # Resolve workspace root (parent of guildmaster if not supplied).
     workspace_root = args.workspace_root if args.workspace_root is not None else root.parent
     clone_dest = workspace_root / bare
 
     # Build the dry-run plan (pure — no writes, no subprocess).
-    plan = _transform_plan(bare, args.desc, dist=args.dist)
+    plan = _transform_plan(bare, args.desc, dist=args.dist, command=args.command_name, pkg=args.pkg)
 
     # Ledger diff (pure — reads only).
     skills = _broadcast.canonical_skills(root)
@@ -198,6 +255,8 @@ def _handle(args: argparse.Namespace) -> None:
         guildmaster_root=root,
         template=args.template,
         dist=args.dist,
+        command=args.command_name,
+        pkg=args.pkg,
     )
 
     # Register in the ledger idempotently.
@@ -213,6 +272,8 @@ def _handle(args: argparse.Namespace) -> None:
         "repo": apply_result["repo"],
         "clone_dest": apply_result["clone_dest"],
         "pushed": apply_result["pushed"],
+        "command": plan["command"],
+        "pkg": plan["pkg"],
         "dist": plan["dist"],
         "ledger_written": ledger_written,
     }
@@ -233,10 +294,10 @@ def _render_dry_run(result: dict) -> str:
         f"  agent      : {result['agent']}",
         f"  backend    : {result['backend']}",
         f"  clone dest : {result['clone_dest']}",
-        f"  pkg        : {plan['pkg']}",
-        f"  repo token : {plan['repo_token']}",
-        f"  dist (PyPI): {plan['dist']}"
-        + ("" if plan["dist"] == plan["repo_token"] else "  (command + import stay repo token)"),
+        f"  repo token : {plan['repo_token']}  (identity: README, culture.yaml, seed, URL)",
+        f"  command    : {plan['command']}",
+        f"  pkg import : {plan['pkg']}",
+        f"  dist (PyPI): {plan['dist']}",
         "",
         "── rename map ──",
     ]

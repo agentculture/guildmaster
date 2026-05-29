@@ -6,37 +6,43 @@ this module customises it in-place into a new sibling agent identified by *bare*
 
 Public API
 ----------
-rename_map(bare) -> dict[str, str]
+rename_map(bare, pkg=None) -> dict[str, str]
     The two identifier substitutions: ``culture_agent_template`` → ``pkg`` and
     ``culture-agent-template`` → ``repo_token``.  Pure function; no I/O.
 
-transform_plan(bare, desc, dist=None) -> dict
+transform_plan(bare, desc, dist=None, command=None, pkg=None) -> dict
     A human/JSON-renderable description of what ``transform_clone`` WOULD do
     (the rename map, package directory rename, pyproject description, README
-    headline change, CLAUDE.md seed replacement, and — when *dist* differs from
-    the repo token — the dist-name retarget).  No I/O.
+    headline change, CLAUDE.md seed replacement, and — when *command* / *dist*
+    differ from the repo token — the command-key / dist-name retargets).  No I/O.
 
-transform_clone(dest, bare, desc, backend, dist=None) -> None
+transform_clone(dest, bare, desc, backend, dist=None, command=None, pkg=None) -> None
     The actual, irreversible in-place transform.  Walks *dest*, skipping
     ``.git/``:
-    1. Global text replace across every file: ``culture_agent_template`` → pkg,
-       then ``culture-agent-template`` → repo_token.  (Underscore form first so
-       it is not partially clobbered — though they don't overlap, underscore
-       first is the safe order.)
-    2. Rename the package directory ``culture_agent_template/`` → ``pkg/``.
+    1. Global text replace across every file: ``culture_agent_template`` →
+       eff_pkg, then ``culture-agent-template`` → repo_token.  (Underscore form
+       first so it is not partially clobbered — though they don't overlap,
+       underscore first is the safe order.)
+    2. Rename the package directory ``culture_agent_template/`` → ``eff_pkg/``.
     3. In ``pyproject.toml`` set ``description = "<desc>"``.
     4. In ``README.md`` replace the first heading text with the new agent name
        and embed *desc* as the sub-heading or first paragraph.
     5. Overwrite ``CLAUDE.md`` with a self-init seed (prompt-file-present +
        backend-consistency compliant; carries an explicit ``/init`` re-init
        instruction; names the agent, embeds *desc*, uses *backend*).
-    6. **Only when** *dist* is given and differs from the repo token: retarget
-       the PyPI distribution name in the three places that name the *dist* (not
-       the import package or the console command) — ``[project].name``, the
-       ``importlib.metadata`` lookup, and the TestPyPI install pin.
+    6. **Only when** *command* differs from the repo token: retarget the console
+       command — the ``[project.scripts]`` entry-point key only.
+    7. **Only when** *dist* differs from the repo token: retarget the PyPI
+       distribution name in the three places that name the *dist* —
+       ``[project].name``, the ``importlib.metadata`` lookup, and the TestPyPI
+       install pin.
 
-    *dist* ``None`` means "leave the dist as the repo token" (the default). An
-    explicitly empty/whitespace *dist* is rejected (``ValueError``) so a stray
+    The repo token stays the repo/agent identity (README, ``culture.yaml``
+    suffix, CLAUDE.md seed, repo URL). *command* / *pkg* / *dist* are each
+    independently retargetable and default to the repo token (or, for *pkg*, the
+    underscore form of the effective command), so with no overrides the output
+    is byte-identical to the legacy single-token behaviour. An explicitly
+    empty/whitespace override is rejected (``ValueError``) so a stray
     programmatic ``""`` is not silently treated as "unset".
 
 This module is PURE w.r.t. the filesystem: it only writes within *dest*, and
@@ -56,6 +62,8 @@ from typing import Callable
 
 _TEMPLATE_PKG = "culture_agent_template"  # underscore form
 _TEMPLATE_REPO = "culture-agent-template"  # hyphen form
+
+_PYPROJECT_TOML = "pyproject.toml"  # the file the dist/command retargets rewrite
 
 _BACKEND_PROMPT_FILE: dict[str, str] = {
     "claude": "CLAUDE.md",
@@ -95,12 +103,70 @@ def _effective_dist(dist: str | None, repo_token: str) -> str:
     return dist
 
 
+def _effective_command(command: str | None, repo_token: str) -> str:
+    """Resolve the console-command name, distinguishing ``None`` from ``""``.
+
+    ``None`` → default to *repo_token* (the command equals the repo identity).
+    An explicitly empty/whitespace value is a programming error and raises
+    ``ValueError`` (the CLI rejects it first), mirroring ``_effective_dist``.
+    """
+    if command is None:
+        return repo_token
+    if not command.strip():
+        raise ValueError("command must be a non-empty string or None")
+    return command
+
+
+def _effective_pkg(pkg: str | None, command: str) -> str:
+    """Resolve the importable package name from *pkg* / the effective *command*.
+
+    ``None`` → default to the underscore form of the (already-resolved)
+    *command*, so the command and import package stay in lock-step like every
+    AgentCulture CLI (``guild``/``guild``). An explicitly empty/whitespace value
+    raises ``ValueError`` (the CLI rejects it first), mirroring the other
+    resolvers.
+    """
+    if pkg is None:
+        return command.replace("-", "_")
+    if not pkg.strip():
+        raise ValueError("pkg must be a non-empty string or None")
+    return pkg
+
+
+def _resolve_identifiers(
+    bare: str,
+    pkg: str | None = None,
+    command: str | None = None,
+    dist: str | None = None,
+) -> tuple[str, str, str, str]:
+    """Resolve the four identifiers from the bare name + optional overrides.
+
+    Returns ``(eff_pkg, repo_token, eff_command, eff_dist)`` — the single source
+    of truth shared by ``transform_plan`` and ``transform_clone`` so plan and
+    transform reason identically.
+
+    * ``repo_token`` is always the repo/agent identity (``bare`` lower-cased).
+    * ``eff_command`` defaults to ``repo_token``.
+    * ``eff_pkg`` defaults to the underscore form of ``eff_command``.
+    * ``eff_dist`` defaults to ``repo_token``.
+
+    Each override is independent; with all of them ``None`` the result is
+    ``(underscore(repo_token), repo_token, repo_token, repo_token)`` — exactly
+    the legacy behaviour.
+    """
+    _, repo_token = _derive(bare)
+    eff_command = _effective_command(command, repo_token)
+    eff_pkg = _effective_pkg(pkg, eff_command)
+    eff_dist = _effective_dist(dist, repo_token)
+    return eff_pkg, repo_token, eff_command, eff_dist
+
+
 # ---------------------------------------------------------------------------
 # Public helpers — no I/O
 # ---------------------------------------------------------------------------
 
 
-def rename_map(bare: str) -> dict[str, str]:
+def rename_map(bare: str, pkg: str | None = None) -> dict[str, str]:
     """Return the two identifier substitutions for the transform.
 
     The dict is ordered:  **underscore form first** (so neither replace
@@ -110,17 +176,29 @@ def rename_map(bare: str) -> dict[str, str]:
     ----------
     bare:
         The bare repo/agent name (e.g. ``"appsec"``, ``"my-agent"``).
+    pkg:
+        The importable package the underscore token maps to. ``None`` (the
+        default) uses the underscore form of *bare* — the legacy behaviour. A
+        value retargets the import package (``--pkg`` / underscore-of-command),
+        so the package dir, imports, ``packages = [...]``, ``sonar.sources`` and
+        the ``[project.scripts]`` *value* module path all follow it in one pass.
 
     Returns
     -------
     dict[str, str]
         ``{old_token: new_token}`` — two entries, underscore form then hyphen.
     """
-    pkg, repo_token = _derive(bare)
-    return {_TEMPLATE_PKG: pkg, _TEMPLATE_REPO: repo_token}
+    derived_pkg, repo_token = _derive(bare)
+    return {_TEMPLATE_PKG: pkg if pkg is not None else derived_pkg, _TEMPLATE_REPO: repo_token}
 
 
-def transform_plan(bare: str, desc: str, dist: str | None = None) -> dict:
+def transform_plan(
+    bare: str,
+    desc: str,
+    dist: str | None = None,
+    command: str | None = None,
+    pkg: str | None = None,
+) -> dict:
     """Return a human/JSON-renderable description of what ``transform_clone`` would do.
 
     Parameters
@@ -134,8 +212,15 @@ def transform_plan(bare: str, desc: str, dist: str | None = None) -> dict:
         as the global-replace result (``repo_token``) — the pure default. When it
         differs from ``repo_token``, an extra retarget step renames just the dist
         (``[project].name``, the ``importlib.metadata`` lookup, and the TestPyPI
-        install pin); the importable package and the console command stay
-        ``repo_token``.
+        install pin).
+    command:
+        The console-command (binary) name. ``None`` → ``repo_token``. When it
+        differs, an extra retarget step rewrites only the ``[project.scripts]``
+        entry-point *key*.
+    pkg:
+        The importable Python package. ``None`` → the underscore form of the
+        effective *command*. Drives the global replace's underscore token (so
+        the package dir, imports and the script *value* module path follow it).
 
     Returns
     -------
@@ -143,35 +228,40 @@ def transform_plan(bare: str, desc: str, dist: str | None = None) -> dict:
         ``rename_map``           — ``{old: new}`` substitution pairs
         ``package_dir_rename``   — ``{old_dir: new_dir}``
         ``pyproject_desc``       — the value that would be written to ``description``
+        ``command``              — the effective console-command name
         ``dist``                 — the effective distribution name
         ``claude_md_seed``       — the first ~3 lines of the seed (synopsis only)
         ``steps``                — ordered list of step descriptions
     """
-    pkg, repo_token = _derive(bare)
-    effective_dist = _effective_dist(dist, repo_token)
-    m = rename_map(bare)
+    eff_pkg, repo_token, eff_command, eff_dist = _resolve_identifiers(bare, pkg, command, dist)
+    m = rename_map(bare, pkg=eff_pkg)
     steps = [
         f"global text replace in every file (skip .git/): "
-        f"{_TEMPLATE_PKG!r} → {pkg!r}, then {_TEMPLATE_REPO!r} → {repo_token!r}",
-        f"rename package directory {_TEMPLATE_PKG!r} → {pkg!r}",
+        f"{_TEMPLATE_PKG!r} → {eff_pkg!r}, then {_TEMPLATE_REPO!r} → {repo_token!r}",
+        f"rename package directory {_TEMPLATE_PKG!r} → {eff_pkg!r}",
         f"set description in pyproject.toml to {desc!r}",
         "replace README.md first heading + intro with new agent name and description",
         "overwrite CLAUDE.md with a self-init seed (names agent, embeds desc, /init instruction)",
     ]
-    if effective_dist != repo_token:
+    if eff_command != repo_token:
         steps.append(
-            f"retarget PyPI distribution name {repo_token!r} → {effective_dist!r} "
-            "([project].name, importlib.metadata lookup, TestPyPI install pin); "
-            f"command + import package stay {repo_token!r}"
+            f"retarget console command {repo_token!r} → {eff_command!r} "
+            "(the [project.scripts] entry-point key only)"
+        )
+    if eff_dist != repo_token:
+        steps.append(
+            f"retarget PyPI distribution name {repo_token!r} → {eff_dist!r} "
+            "([project].name, importlib.metadata lookup, TestPyPI install pin)"
         )
     return {
         "bare": bare,
-        "pkg": pkg,
+        "pkg": eff_pkg,
         "repo_token": repo_token,
+        "command": eff_command,
         "rename_map": m,
-        "package_dir_rename": {_TEMPLATE_PKG: pkg},
+        "package_dir_rename": {_TEMPLATE_PKG: eff_pkg},
         "pyproject_desc": desc,
-        "dist": effective_dist,
+        "dist": eff_dist,
         "claude_md_seed_synopsis": f"# CLAUDE.md seed for {bare} — run /init to expand",
         "steps": steps,
     }
@@ -339,7 +429,7 @@ def _retarget_dist(dest: Path, pkg: str, repo_token: str, dist: str) -> None:
     name_line = re.compile(r'(?m)^(\s*name\s*=\s*)["\']' + re.escape(repo_token) + r'["\']')
 
     _rewrite_text_file(
-        dest / "pyproject.toml",
+        dest / _PYPROJECT_TOML,
         lambda text: name_line.sub(lambda m: m.group(1) + '"' + dist + '"', text),
     )
     _rewrite_text_file(
@@ -351,6 +441,30 @@ def _retarget_dist(dest: Path, pkg: str, repo_token: str, dist: str) -> None:
     _rewrite_text_file(
         dest / ".github" / "workflows" / "publish.yml",
         lambda text: text.replace(f"{repo_token}==", f"{dist}=="),
+    )
+
+
+def _retarget_command(dest: Path, repo_token: str, command: str) -> None:
+    """Rename only the console **command** from *repo_token* to *command*.
+
+    Called after the global token replace has set every ``culture-agent-template``
+    occurrence to *repo_token*. This narrowly rewrites the single place that names
+    the console *command* (as opposed to the dist or the import package): the
+    ``[project.scripts]`` entry-point *key* in ``pyproject.toml``.
+
+    The match is anchored at line start with optional indentation
+    (``^[ \\t]*<repo_token>\\s*=``) — TOML permits an indented table entry — and
+    preserves that indentation, so it hits only the scripts key: never
+    ``name = "<repo_token>"`` (that line starts with ``name``) and never the
+    script *value* (``"<pkg>.cli:main"``). Degrades gracefully if
+    ``pyproject.toml`` or the pattern is absent. No-op is the caller's
+    responsibility (skip when ``command`` equals ``repo_token``).
+    """
+    key_line = re.compile(r"(?m)^([ \t]*)" + re.escape(repo_token) + r"(\s*=\s*)")
+
+    _rewrite_text_file(
+        dest / _PYPROJECT_TOML,
+        lambda text: key_line.sub(lambda m: m.group(1) + command + m.group(2), text),
     )
 
 
@@ -477,22 +591,30 @@ def transform_clone(
     desc: str,
     backend: str = "claude",
     dist: str | None = None,
+    command: str | None = None,
+    pkg: str | None = None,
 ) -> None:
     """Customise the cloned template tree at *dest* into the new agent *bare*.
 
     This function performs the complete in-place transform:
 
     1. **Global text replace** across every file (skipping ``.git/``):
-       ``culture_agent_template`` → pkg, then ``culture-agent-template`` →
+       ``culture_agent_template`` → eff_pkg, then ``culture-agent-template`` →
        repo_token.  (Underscore form first — safe order.)
-    2. **Rename** the package directory ``culture_agent_template/`` → ``pkg/``.
+    2. **Rename** the package directory ``culture_agent_template/`` → ``eff_pkg/``.
     3. **Set description** in ``pyproject.toml``.
     4. **Rewrite README.md** first heading + intro.
     5. **Overwrite CLAUDE.md** (or ``AGENTS.md`` for acp) with a self-init seed.
-    6. **Retarget the PyPI dist name** to *dist* (only when it differs from
+    6. **Retarget the console command** to *command* (only when it differs from
+       ``repo_token``) — the ``[project.scripts]`` entry-point key only.
+    7. **Retarget the PyPI dist name** to *dist* (only when it differs from
        ``repo_token``) — ``[project].name``, the ``importlib.metadata`` lookup,
-       and the TestPyPI install pin. The importable package and the console
-       command stay ``repo_token``.
+       and the TestPyPI install pin.
+
+    The repo token always stays the repo/agent identity (README heading,
+    ``culture.yaml`` suffix, CLAUDE.md seed, repo URL). The command, import
+    package, and dist are each independently retargetable; with all overrides
+    ``None`` the result is byte-identical to the legacy single-token behaviour.
 
     Parameters
     ----------
@@ -506,7 +628,14 @@ def transform_clone(
         ``"claude"`` (default) or ``"acp"``.
     dist:
         PyPI distribution name. ``None`` leaves it as ``repo_token`` (the pure
-        default); a different value retargets only the dist (step 6).
+        default); a different value retargets only the dist (step 7).
+    command:
+        Console-command name. ``None`` leaves it as ``repo_token``; a different
+        value retargets only the ``[project.scripts]`` key (step 6).
+    pkg:
+        Importable package name. ``None`` defaults to the underscore form of the
+        effective *command* (so command + import package stay in lock-step); it
+        drives the global replace's underscore token (steps 1-2).
 
     Raises
     ------
@@ -522,11 +651,11 @@ def transform_clone(
     if not dest.is_dir():
         raise FileNotFoundError(f"dest is not a directory: {dest}")
 
-    pkg, repo_token = _derive(bare)
-    # Resolve the dist up front so an explicitly-empty value is rejected before
-    # any file is touched (None → repo_token; "" / whitespace → ValueError).
-    effective_dist = _effective_dist(dist, repo_token)
-    replacements = rename_map(bare)  # underscore first, then hyphen
+    # Resolve all four identifiers up front so an explicitly-empty override is
+    # rejected before any file is touched (None → default; "" / whitespace →
+    # ValueError), and plan/transform reason identically about their inputs.
+    eff_pkg, repo_token, eff_command, eff_dist = _resolve_identifiers(bare, pkg, command, dist)
+    replacements = rename_map(bare, pkg=eff_pkg)  # underscore first, then hyphen
 
     # Step 1 — global text replace (visit all files before the directory rename
     # so the package dir's own files are updated while still reachable).
@@ -535,12 +664,12 @@ def transform_clone(
 
     # Step 2 — rename the package directory.
     old_pkg_dir = dest / _TEMPLATE_PKG
-    new_pkg_dir = dest / pkg
+    new_pkg_dir = dest / eff_pkg
     if old_pkg_dir.is_dir() and old_pkg_dir != new_pkg_dir:
         old_pkg_dir.rename(new_pkg_dir)
 
     # Step 3 — set description in pyproject.toml.
-    _set_pyproject_description(dest / "pyproject.toml", desc)
+    _set_pyproject_description(dest / _PYPROJECT_TOML, desc)
 
     # Step 4 — rewrite README.md first heading + intro.
     _set_readme_intro(dest / "README.md", bare, desc)
@@ -550,7 +679,13 @@ def transform_clone(
     seed_content = _seed_prompt(bare, desc, backend)
     (dest / prompt_file).write_text(seed_content, encoding="utf-8")
 
-    # Step 6 — retarget the PyPI dist name (only when it differs from repo_token,
+    # Step 6 — retarget the console command (only when it differs from repo_token).
+    # Independent of step 7: this rewrites the scripts *key* line, the dist
+    # retarget rewrites the [project].name *value* line — different anchors.
+    if eff_command != repo_token:
+        _retarget_command(dest, repo_token, eff_command)
+
+    # Step 7 — retarget the PyPI dist name (only when it differs from repo_token,
     # so the default is a true no-op and the bare-name case is unchanged).
-    if effective_dist != repo_token:
-        _retarget_dist(dest, pkg, repo_token, effective_dist)
+    if eff_dist != repo_token:
+        _retarget_dist(dest, eff_pkg, repo_token, eff_dist)

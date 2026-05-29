@@ -8,7 +8,7 @@ new sibling agent.
 Public surface
 --------------
 ``instantiate`` — the transform module:
-    transform_clone(dest, pkg, repo_token, desc, backend) -> None
-    rename_map(bare) -> dict[str, str]
-    transform_plan(bare, desc) -> dict
+    transform_clone(dest, bare, desc, backend="claude", dist=None, command=None, pkg=None) -> None
+    rename_map(bare, pkg=None) -> dict[str, str]
+    transform_plan(bare, desc, dist=None, command=None, pkg=None) -> dict
 """
