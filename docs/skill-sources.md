@@ -33,13 +33,13 @@ current by `guild overview --scope mesh`.
 | Skill | Upstream | Downstream copies (known) | Notes |
 |-------|----------|---------------------------|-------|
 | `agent-config` | `guildmaster` (`.claude/skills/agent-config/`) | `agenda`, `dominion-breaker`, `convertible`, `jetson` | Inventory variant backing `guild show` ([#12](https://github.com/agentculture/guildmaster/issues/12)); `show.sh` + `data/backend-fingerprints.yaml` vendored verbatim from steward, SKILL.md reframed from alignment-judgment to inventory + `type: command` added. **Forked from steward:** steward retains its own alignment-focused `agent-config` variant; the inventory variant is guildmaster's to supply. |
-| `cicd` | `guildmaster` (`.claude/skills/cicd/`) — layered on `agex pr` (in `agentculture/agex-cli`) | `afi-cli`, `agex-cli` (adapted-thin delegate — owns `agex pr`; see [agex-cli#53](https://github.com/agentculture/agex-cli/pull/53)), `agtag`, `antoine`, `appsec`, `auntiepypi`, `cfafi` (still named `pr-review`), `code-lens-cli`, `culture` (still named `pr-review`), `devague`, `katvan`, `lecodeur`, `lepenseur`, `seer-cli`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Thin delegate to `agex pr` for lint / open / read / reply / delta, plus guildmaster's `status` (SonarCloud quality gate + hotspots + unresolved-thread tally) and `await` (composes `agex pr read --wait` with `status`, non-zero exit on Sonar ERROR / unresolved threads) extensions. **Inverted case:** agex-cli, as the `agex pr` upstream, vendors the skill adapted-thin — a `workflow.sh`-only pure delegate ([agex-cli#53](https://github.com/agentculture/agex-cli/pull/53)). Renamed from `pr-review` in steward 0.7.0; downstream copies may keep the old name on their own cadence. |
+| `cicd` | `guildmaster` (`.claude/skills/cicd/`) — layered on `agex pr` (in `agentculture/agex-cli`) | `afi-cli`, `agex-cli` (adapted-thin delegate — owns `agex pr`; see [agex-cli#53](https://github.com/agentculture/agex-cli/pull/53)), `agtag`, `antoine`, `appsec`, `auntiepypi`, `cfafi` (still named `pr-review`), `code-lens-cli`, `culture` (still named `pr-review`), `devague`, `katvan`, `lecodeur`, `lepenseur`, `seer-cli`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson`, `grant` (still named `pr-review`) | Thin delegate to `agex pr` for lint / open / read / reply / delta, plus guildmaster's `status` (SonarCloud quality gate + hotspots + unresolved-thread tally) and `await` (composes `agex pr read --wait` with `status`, non-zero exit on Sonar ERROR / unresolved threads) extensions. **Inverted case:** agex-cli, as the `agex pr` upstream, vendors the skill adapted-thin — a `workflow.sh`-only pure delegate ([agex-cli#53](https://github.com/agentculture/agex-cli/pull/53)). Renamed from `pr-review` in steward 0.7.0; downstream copies may keep the old name on their own cadence. |
 | `communicate` | `guildmaster` (`.claude/skills/communicate/`) | `afi-cli`, `agex-cli` (identifier-only — vendored steward 0.11.0; scripts current as of 0.18.0), `agtag`, `antoine`, `appsec`, `auntiepypi`, `code-lens-cli`, `culture` (still named `coordinate`), `devague`, `katvan`, `lecodeur`, `lepenseur`, `seer-cli`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Cross-repo + mesh communication: file issues / hand off briefs to sibling-repo agents (auto-signed), comment on existing issues, fetch issues to inline state into briefs, and send live messages to Culture mesh channels (unsigned — nick is the speaker). Renamed from `coordinate` in steward 0.8.0; absorbed `gh-issues` (as `fetch-issues.sh`) in 0.9.1. Issue I/O backed by `agtag` (>=0.1) since steward 0.11.0 — signature resolves from local `culture.yaml` (override via `--as`). |
 | `doc-test-alignment` | `guildmaster` (`.claude/skills/doc-test-alignment/`) | `devague`, `lecodeur`, `lepenseur`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Stub; real implementation TBD. `scripts/check.sh` exits not-yet-implemented today. |
 | `pypi-maintainer` | `guildmaster` (`.claude/skills/pypi-maintainer/`) | `agtag`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Switches a PyPI package install between pypi / test-pypi / local. Generalised from the original culture-specific `change-package`. |
-| `run-tests` | `guildmaster` (`.claude/skills/run-tests/`) | `agtag`, `antoine`, `appsec`, `code-lens-cli`, `culture`, `culture-sonar-cli`, `devague`, `lecodeur`, `lepenseur`, `seer-cli`, `shushu`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Coverage source resolves from `[tool.coverage.run]` in `pyproject.toml`, so the script is portable across siblings without modification. |
+| `run-tests` | `guildmaster` (`.claude/skills/run-tests/`) | `agtag`, `antoine`, `appsec`, `code-lens-cli`, `culture`, `culture-sonar-cli`, `devague`, `lecodeur`, `lepenseur`, `seer-cli`, `grant`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Coverage source resolves from `[tool.coverage.run]` in `pyproject.toml`, so the script is portable across siblings without modification. |
 | `sonarclaude` | `guildmaster` (`.claude/skills/sonarclaude/`) | `antoine`, `appsec`, `code-lens-cli`, `devague`, `lecodeur`, `lepenseur`, `seer-cli`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | SonarCloud API client. Project key resolves from `$SONAR_PROJECT` or `--project KEY`. |
-| `version-bump` | `guildmaster` (`.claude/skills/version-bump/`) | `afi-cli`, `agtag`, `antoine`, `appsec`, `auntiepypi`, `cfafi`, `code-lens-cli`, `culture`, `devague`, `lecodeur`, `lepenseur`, `seer-cli`, `shushu`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Pure Python, prepends a Keep-a-Changelog entry; no per-repo customization needed. |
+| `version-bump` | `guildmaster` (`.claude/skills/version-bump/`) | `afi-cli`, `agtag`, `antoine`, `appsec`, `auntiepypi`, `cfafi`, `code-lens-cli`, `culture`, `devague`, `lecodeur`, `lepenseur`, `seer-cli`, `grant`, `telek`, `agenda`, `dominion-breaker`, `convertible`, `jetson` | Pure Python, prepends a Keep-a-Changelog entry; no per-repo customization needed. |
 
 > **How the downstream column is maintained.** The "Downstream copies (known)"
 > entries are kept in sync with guildmaster's own drift detector:
@@ -49,14 +49,20 @@ current by `guild overview --scope mesh`.
 > (deliberate follow-up, not oversight):
 >
 > - **No `culture.yaml`** (invisible to the detector): `tipalti`,
->   `cultureagent`, `cultureflare`, `irc-lens`, `agentirc`, `zehut`.
+>   `cultureagent`, `cultureflare`, `irc-lens`, `agentirc`, `zehut`, `grant`
+>   (renamed from `shushu`; the repo has no committed `culture.yaml` yet, so
+>   `--scope mesh` cannot see it until one is added).
 > - **Old skill-dir name** (`pr-review` / `coordinate`, which the detector
->   doesn't canonicalize): `daria`, `shushu`, `culture-sonar-cli` vendor `cicd`
->   under `pr-review`. `cfafi` / `culture` are already listed with a "still
->   named `pr-review`/`coordinate`" note.
+>   doesn't canonicalize): `daria`, `culture-sonar-cli` vendor `cicd`
+>   under `pr-review`. `cfafi` / `culture` / `grant` are already listed with a
+>   "still named `pr-review`/`coordinate`" note.
 >
 > `agentpypi` was **renamed to `auntiepypi`** on GitHub (the old name redirects);
-> `auntiepypi` is the live consumer recorded above.
+> `auntiepypi` is the live consumer recorded above. Likewise `shushu` was
+> **renamed to `grant`** on GitHub (the old name redirects); `grant` is the live
+> consumer recorded above. guildmaster is bringing `grant` to the full canonical
+> kit (`guild teach --all --to grant`); the remaining canonical skills register
+> as downstream once `grant` applies the resync issue.
 
 ## Inbound workflow skills (origin = `devague`, re-broadcast by `guildmaster`)
 

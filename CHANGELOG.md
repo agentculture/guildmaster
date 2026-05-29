@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-05-29
+
+### Added
+
+### Changed
+
+- **Ledger: `shushu` → `grant` rename.** `agentculture/shushu` was renamed to
+  `agentculture/grant` ("agent-first secrets manager") on GitHub; the old name
+  redirects. Updated `docs/skill-sources.md` to record `grant` as the live
+  downstream consumer: renamed `shushu` → `grant` in the `run-tests` and
+  `version-bump` Downstream columns, added `grant` to the `cicd` column with a
+  "still named `pr-review`" caveat (its copy is the pre-agex `cicd`), and
+  refreshed the maintenance notes (old-skill-dir-name class, the
+  no-`culture.yaml` class — `grant`'s repo has no committed `culture.yaml` yet —
+  and a `shushu` → `grant` rename note mirroring `agentpypi` → `auntiepypi`).
+  Brings `guild teach`/`overview` framing onto the current name. Pairs with
+  [grant#18](https://github.com/agentculture/grant/issues/18), the
+  `guild teach --all --to grant` issue that brings `grant` to the full canonical
+  kit (3 resyncs — `cicd`/`run-tests`/`version-bump` — plus 8 new skills); the
+  remaining 8 register as downstream once `grant` applies the resync.
+
+### Fixed
+
 ## [0.7.1] - 2026-05-29
 
 ### Added
