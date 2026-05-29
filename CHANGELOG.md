@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-05-30
+
+### Added
+
+- **Register `reachy-mini-cli` as a downstream consumer** in
+  `docs/skill-sources.md` — the first use of the `--command` / `--pkg` split
+  ([#43](https://github.com/agentculture/guildmaster/issues/43)). Provisioned
+  via `guild create --apply --command reachy --dist reachy-cli`: repo/agent
+  identity `reachy-mini-cli`, console command + import package `reachy`, PyPI
+  distribution `reachy-cli`. Registered across all canonical + devague skill
+  rows.
+
+### Changed
+
+### Fixed
+
 ## [0.8.0] - 2026-05-30
 
 ### Added
