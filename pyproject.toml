@@ -1,6 +1,6 @@
 [project]
 name = "guild-cli"
-version = "0.7.2"
+version = "0.7.3"
 description = "guildmaster — an agent and CLI that manages skills for the AgentCulture mesh."
 readme = "README.md"
 license = "MIT"
@@ -45,6 +45,13 @@ dev = [
 [tool.coverage.run]
 source = ["guild"]
 omit = ["guild/__pycache__/*"]
+# Emit repo-relative paths in coverage.xml so SonarCloud maps them onto
+# sonar.sources=guild. Without this, coverage records absolute (or .venv)
+# file paths that the scanner can't match against the indexed sources, so the
+# import silently yields "0.0% Coverage on New Code" even when tests cover the
+# change. (Today the editable install masks this; relative_files makes it
+# install-mode-independent.) Mirrors devex's CI-based SonarCloud setup.
+relative_files = true
 
 [tool.coverage.report]
 fail_under = 60

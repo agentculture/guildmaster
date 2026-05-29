@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2026-05-29
+
+### Added
+
+### Changed
+
+### Fixed
+
+- **CI: make SonarCloud coverage import install-mode-independent.** Added
+  `relative_files = true` to `[tool.coverage.run]` so `coverage.xml` records
+  repo-relative paths (`<source>guild</source>` + `cli/foo.py`) that the Sonar
+  scanner can match against `sonar.sources=guild`. Previously coverage recorded
+  the absolute, machine-specific package path (`/…/guildmaster/guild`); it
+  mapped only because `guild` is installed editable in CI — a non-editable or
+  `.venv` install would have silently yielded "0.0% Coverage on New Code".
+  Mirrors the CI-based SonarCloud setup proven in the sibling `devex` repo.
+
 ## [0.7.2] - 2026-05-29
 
 ### Added
