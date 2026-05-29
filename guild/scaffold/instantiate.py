@@ -63,6 +63,8 @@ from typing import Callable
 _TEMPLATE_PKG = "culture_agent_template"  # underscore form
 _TEMPLATE_REPO = "culture-agent-template"  # hyphen form
 
+_PYPROJECT_TOML = "pyproject.toml"  # the file the dist/command retargets rewrite
+
 _BACKEND_PROMPT_FILE: dict[str, str] = {
     "claude": "CLAUDE.md",
     "acp": "AGENTS.md",
@@ -427,7 +429,7 @@ def _retarget_dist(dest: Path, pkg: str, repo_token: str, dist: str) -> None:
     name_line = re.compile(r'(?m)^(\s*name\s*=\s*)["\']' + re.escape(repo_token) + r'["\']')
 
     _rewrite_text_file(
-        dest / "pyproject.toml",
+        dest / _PYPROJECT_TOML,
         lambda text: name_line.sub(lambda m: m.group(1) + '"' + dist + '"', text),
     )
     _rewrite_text_file(
@@ -450,17 +452,19 @@ def _retarget_command(dest: Path, repo_token: str, command: str) -> None:
     the console *command* (as opposed to the dist or the import package): the
     ``[project.scripts]`` entry-point *key* in ``pyproject.toml``.
 
-    The match is anchored at line start (``^<repo_token>\\s*=``), so it hits only
-    the scripts key — never ``name = "<repo_token>"`` (that line starts with
-    ``name``) and never the script *value* (``"<pkg>.cli:main"``). Degrades
-    gracefully if ``pyproject.toml`` or the pattern is absent. No-op is the
-    caller's responsibility (skip when ``command`` equals ``repo_token``).
+    The match is anchored at line start with optional indentation
+    (``^[ \\t]*<repo_token>\\s*=``) — TOML permits an indented table entry — and
+    preserves that indentation, so it hits only the scripts key: never
+    ``name = "<repo_token>"`` (that line starts with ``name``) and never the
+    script *value* (``"<pkg>.cli:main"``). Degrades gracefully if
+    ``pyproject.toml`` or the pattern is absent. No-op is the caller's
+    responsibility (skip when ``command`` equals ``repo_token``).
     """
-    key_line = re.compile(r"(?m)^" + re.escape(repo_token) + r"(\s*=\s*)")
+    key_line = re.compile(r"(?m)^([ \t]*)" + re.escape(repo_token) + r"(\s*=\s*)")
 
     _rewrite_text_file(
-        dest / "pyproject.toml",
-        lambda text: key_line.sub(lambda m: command + m.group(1), text),
+        dest / _PYPROJECT_TOML,
+        lambda text: key_line.sub(lambda m: m.group(1) + command + m.group(2), text),
     )
 
 
@@ -665,7 +669,7 @@ def transform_clone(
         old_pkg_dir.rename(new_pkg_dir)
 
     # Step 3 — set description in pyproject.toml.
-    _set_pyproject_description(dest / "pyproject.toml", desc)
+    _set_pyproject_description(dest / _PYPROJECT_TOML, desc)
 
     # Step 4 — rewrite README.md first heading + intro.
     _set_readme_intro(dest / "README.md", bare, desc)

@@ -145,34 +145,39 @@ def register(sub: argparse._SubParsersAction) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Handler
+# Validation (fail-fast, before any external act)
 # ---------------------------------------------------------------------------
 
 
-def _handle(args: argparse.Namespace) -> None:
-    root = repo_root()
-    agent = _broadcast.normalize_target(args.agent, args.org)
-    bare = agent.rsplit("/", 1)[-1]
-    repo_token = bare.lower()
-
-    # Validate the optional console-command name (PEP 503-ish), fail fast.
-    if args.command_name is not None and not _PEP503.match(args.command_name):
+def _validate_pep503(value: str | None, flag: str, what: str, example: str) -> None:
+    """Reject *value* (when given) if it is not a PEP 503-ish name."""
+    if value is not None and not _PEP503.match(value):
         raise GuildError(
             code=EXIT_USER_ERROR,
-            message=f"--command {args.command_name!r} is not a valid command name",
+            message=f"{flag} {value!r} is not a valid {what}",
             remediation=(
-                "use letters/digits/.-_ starting and ending alphanumerically (e.g. 'reachy')"
+                "use letters/digits/.-_ starting and ending alphanumerically " f"(e.g. {example!r})"
             ),
         )
 
-    # Resolve and validate the *effective* import package (fail fast, before any
-    # external act) — it is both a directory name and a global rename token, so
-    # an invalid value (dots, leading digit, keyword) breaks the generated
-    # sibling. The package defaults to the underscore form of the effective
-    # command (which defaults to the repo name). Attribute a bad value to --pkg,
-    # else --command, else the repo name.
+
+def _effective_pkg_for_validation(args: argparse.Namespace, repo_token: str) -> str:
+    """Mirror the resolver: the import package the transform will actually use."""
     effective_command = args.command_name if args.command_name is not None else repo_token
-    effective_pkg = args.pkg if args.pkg is not None else effective_command.replace("-", "_")
+    return args.pkg if args.pkg is not None else effective_command.replace("-", "_")
+
+
+def _validate_identifiers(args: argparse.Namespace, bare: str, repo_token: str) -> None:
+    """Fail-fast validation of --command / --pkg / --dist before any external act.
+
+    The *effective* import package is both a directory name and a global rename
+    token, so an invalid value (dots, leading digit, keyword) breaks the
+    generated sibling. Attribute a bad value to --pkg, else --command, else the
+    repo name.
+    """
+    _validate_pep503(args.command_name, "--command", "command name", "reachy")
+
+    effective_pkg = _effective_pkg_for_validation(args, repo_token)
     if not effective_pkg.isidentifier() or keyword.iskeyword(effective_pkg):
         if args.pkg is not None:
             source = f"--pkg {args.pkg!r}"
@@ -189,15 +194,21 @@ def _handle(args: argparse.Namespace) -> None:
             ),
         )
 
-    # Validate the optional PyPI dist name (fail fast, before any external act).
-    if args.dist is not None and not _PEP503.match(args.dist):
-        raise GuildError(
-            code=EXIT_USER_ERROR,
-            message=f"--dist {args.dist!r} is not a valid PyPI distribution name",
-            remediation=(
-                "use letters/digits/.-_ starting and ending alphanumerically (e.g. 'jetson-cli')"
-            ),
-        )
+    _validate_pep503(args.dist, "--dist", "PyPI distribution name", "jetson-cli")
+
+
+# ---------------------------------------------------------------------------
+# Handler
+# ---------------------------------------------------------------------------
+
+
+def _handle(args: argparse.Namespace) -> None:
+    root = repo_root()
+    agent = _broadcast.normalize_target(args.agent, args.org)
+    bare = agent.rsplit("/", 1)[-1]
+    repo_token = bare.lower()
+
+    _validate_identifiers(args, bare, repo_token)
 
     # Resolve workspace root (parent of guildmaster if not supplied).
     workspace_root = args.workspace_root if args.workspace_root is not None else root.parent

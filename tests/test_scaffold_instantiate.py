@@ -609,6 +609,26 @@ def test_transform_command_only_retargets_scripts_key(tmp_path):
     assert 'packages = ["reachy"]' in pyproject
 
 
+def test_transform_command_retargets_indented_scripts_key(tmp_path):
+    """An indented [project.scripts] entry (valid TOML) is still retargeted."""
+    dest = _build_fixture(tmp_path)
+    # Re-write pyproject with an INDENTED scripts key (valid TOML formatting).
+    (dest / "pyproject.toml").write_text(
+        '[project]\nname = "culture-agent-template"\n'
+        'description = "x"\n'
+        'packages = ["culture_agent_template"]\n'
+        "\n[project.scripts]\n"
+        '    culture-agent-template = "culture_agent_template.cli:main"\n'
+    )
+    transform_clone(dest, "reachy-mini-cli", "Robot.", "claude", command="reachy")
+    pyproject = (dest / "pyproject.toml").read_text()
+    # The key was rewritten AND its indentation preserved.
+    assert '    reachy = "reachy.cli:main"' in pyproject
+    assert "reachy-mini-cli =" not in pyproject
+    # [project].name (the dist) is untouched — no --dist.
+    assert 'name = "reachy-mini-cli"' in pyproject
+
+
 def test_transform_command_only_keeps_repo_identity(tmp_path):
     """README heading, culture.yaml suffix, and the seed stay the repo token."""
     dest = _build_fixture(tmp_path)
