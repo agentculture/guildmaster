@@ -30,12 +30,27 @@ def _build_fixture(tmp_path: Path) -> Path:
     (tmp_path / ".git").mkdir()
     (tmp_path / ".git" / "config").write_text("[core]\n\trepositoryformatversion = 0\n")
 
-    # Package directory with __init__.py that imports from the package
+    # Package directory with __init__.py that imports from the package and reads
+    # its version from the *distribution* metadata (hyphen form, like the real
+    # template's `importlib.metadata` lookup).
     pkg_dir = tmp_path / _TEMPLATE_PKG
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text(
         '"""culture_agent_template package."""\n'
+        "from importlib.metadata import version as _pkg_version\n"
         "from culture_agent_template import cli  # noqa: F401\n"
+        '\n__version__ = _pkg_version("culture-agent-template")\n'
+    )
+
+    # .github/workflows/publish.yml — the TestPyPI install hint pins the dist.
+    wf_dir = tmp_path / ".github" / "workflows"
+    wf_dir.mkdir(parents=True)
+    (wf_dir / "publish.yml").write_text(
+        "name: publish\n"
+        "jobs:\n"
+        "  test-publish:\n"
+        "    steps:\n"
+        '      - run: echo "install culture-agent-template==${DEV_VERSION}"\n'
     )
 
     # pyproject.toml
@@ -373,6 +388,101 @@ def test_transform_readme_consumes_wrapped_inline_code_prose(tmp_path):
     assert "AppSec scanner." in readme
     assert "culture.yaml` to taste" not in readme  # backtick prose consumed
     assert "## More" in readme
+
+
+# ---------------------------------------------------------------------------
+# --dist retarget tests
+# ---------------------------------------------------------------------------
+
+
+def test_transform_default_dist_leaves_repo_token(tmp_path):
+    """No dist → the dist name stays the global-replace result (repo_token)."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude")
+    pyproject = (dest / "pyproject.toml").read_text()
+    assert 'name = "appsec"' in pyproject
+    init = (dest / "appsec" / "__init__.py").read_text()
+    assert '_pkg_version("appsec")' in init
+
+
+def test_transform_dist_equal_repo_token_is_noop(tmp_path):
+    """Explicitly passing dist == repo_token changes nothing (no-op guard)."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="appsec")
+    pyproject = (dest / "pyproject.toml").read_text()
+    assert 'name = "appsec"' in pyproject
+    assert "appsec-cli" not in pyproject
+
+
+def test_transform_custom_dist_retargets_pyproject_name(tmp_path):
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="appsec-cli")
+    pyproject = (dest / "pyproject.toml").read_text()
+    assert 'name = "appsec-cli"' in pyproject
+
+
+def test_transform_custom_dist_retargets_init_metadata(tmp_path):
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="appsec-cli")
+    init = (dest / "appsec" / "__init__.py").read_text()
+    assert '_pkg_version("appsec-cli")' in init
+
+
+def test_transform_custom_dist_retargets_publish_pin(tmp_path):
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="appsec-cli")
+    wf = (dest / ".github" / "workflows" / "publish.yml").read_text()
+    assert "appsec-cli==${DEV_VERSION}" in wf
+    assert "appsec==${DEV_VERSION}" not in wf
+
+
+def test_transform_custom_dist_keeps_command_and_package(tmp_path):
+    """The dist rename must NOT touch the console command or the package dir."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="appsec-cli")
+    # Package dir stays the import name.
+    assert (dest / "appsec").is_dir()
+    pyproject = (dest / "pyproject.toml").read_text()
+    # The console script (under [project.scripts]) stays the bare command.
+    assert 'appsec = "appsec.cli:main"' in pyproject
+    # packages list stays the import name.
+    assert 'packages = ["appsec"]' in pyproject
+
+
+def test_transform_custom_dist_hyphenated_repo(tmp_path):
+    """A hyphenated repo (my-agent) with a custom dist still retargets correctly."""
+    dest = _build_fixture(tmp_path)
+    transform_clone(dest, "my-agent", "Hyphenated.", "claude", dist="my-agent-cli")
+    pyproject = (dest / "pyproject.toml").read_text()
+    assert 'name = "my-agent-cli"' in pyproject
+    # command + package (underscore) untouched.
+    assert (dest / "my_agent").is_dir()
+    assert 'my-agent = "my_agent.cli:main"' in pyproject
+
+
+def test_transform_plan_includes_dist_default(tmp_path):
+    plan = transform_plan("appsec", "AppSec agent.")
+    assert plan["dist"] == "appsec"
+    # No retarget step when dist == repo_token.
+    assert not any("retarget" in s.lower() for s in plan["steps"])
+
+
+def test_transform_plan_includes_dist_custom(tmp_path):
+    plan = transform_plan("appsec", "AppSec agent.", dist="appsec-cli")
+    assert plan["dist"] == "appsec-cli"
+    assert any("retarget" in s.lower() and "appsec-cli" in s for s in plan["steps"])
+
+
+def test_transform_clone_empty_dist_raises(tmp_path):
+    """An explicitly-empty dist is a programming error, not "use the default"."""
+    dest = _build_fixture(tmp_path)
+    with pytest.raises(ValueError, match="dist"):
+        transform_clone(dest, "appsec", "AppSec agent.", "claude", dist="")
+
+
+def test_transform_plan_whitespace_dist_raises():
+    with pytest.raises(ValueError, match="dist"):
+        transform_plan("appsec", "AppSec agent.", dist="   ")
 
 
 def test_transform_seed_avoids_md036_standalone_emphasis(tmp_path):

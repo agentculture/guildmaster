@@ -12,7 +12,12 @@ set -euo pipefail
 # Usage:
 #   create.sh --agent OWNER/REPO --desc TEXT [--backend claude|acp]
 #             [--workspace-root DIR] [--template OWNER/REPO]
-#             [--org agentculture] [--apply] [--json]
+#             [--org agentculture] [--dist NAME] [--apply] [--json]
+#
+# --dist NAME sets the PyPI distribution name (default: the repo name); pass
+#   e.g. --dist jetson-cli to ship the dist as jetson-cli while keeping the
+#   command + import package as the repo name. Retargets [project].name, the
+#   importlib.metadata lookup, and the TestPyPI install pin.
 #
 # Exit codes:
 #   0   success (delegates to `guild create`; its exit code propagates)
