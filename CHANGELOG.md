@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-05-30
+
+### Added
+
+- **Register `jetson-ai-lab-cli` as a downstream consumer** in
+  `docs/skill-sources.md`. Provisioned `agentculture/jetson-ai-lab-cli`
+  via `guild create --apply` (`--command jlab --dist jetson-ai-lab`,
+  `--backend claude`) — a Discord-facing knowledge fetch & index agent for
+  the Jetson AI Lab community — adding it to the downstream column of every
+  canonical skill.
+
+### Changed
+
+- Refresh `uv.lock` to the current `0.8.1` package version (the lockfile
+  was stale relative to `pyproject.toml`).
+
+### Fixed
+
 ## [0.8.1] - 2026-05-30
 
 ### Added
