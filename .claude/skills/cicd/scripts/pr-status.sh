@@ -160,4 +160,4 @@ if [[ "$INLINE_PENDING" -gt 0 ]]; then
 fi
 
 echo
-echo "(For full comment bodies: agex pr read --agent claude-code $PR_NUMBER)"
+echo "(For full comment bodies: devex pr read --agent claude-code $PR_NUMBER)"

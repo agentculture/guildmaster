@@ -15,7 +15,7 @@ confirmed steward has stopped firing `announce-skill-update` and accepts
 `teach` / `onboard` as the broadcast role. guildmaster is now the **sole
 broadcaster**; `--apply` is **live**. First post-cutover broadcast: the
 2026-05-24 `guild teach` resync to 7 agents (katvan, antoine, appsec, culture,
-auntiepypi, agex-cli, devague).
+auntiepypi, devex, devague).
 
 > **Records reconciliation (steward side).** steward's [PR #62](https://github.com/agentculture/steward/pull/62)
 > recorded only a *partial* handoff (devague-trio downstream tracking) and its

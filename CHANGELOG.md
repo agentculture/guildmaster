@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2026-05-30
+
+### Changed
+
+- **Rename the PR-lifecycle CLI `agex` / `agex-cli` → `devex`** (same tool, new
+  name; `agentculture/agex-cli` → `agentculture/devex`) across the canonical
+  skills and docs guildmaster owns: `CLAUDE.md`, the vendored `cicd`
+  (`SKILL.md`, `workflow.sh`, `pr-status.sh`), `communicate`
+  (`skill-new-brief.md` template) and `assign-to-workforce` skills,
+  `docs/skill-sources.md`, `docs/cutover.md`, and `.gitignore` (now ignores
+  both `.devex/` and the still-used `.agex/` — `devex` 0.28.0 still writes its
+  per-checkout working dir to `.agex/`). The `cicd` scripts now invoke `devex
+  pr` and the internal
+  identifiers became `DEVEX_AGENT` / `STEWARD_DEVEX_AGENT` / `require_devex`.
+  guildmaster is the canonical owner of `cicd` / `communicate` and the sole
+  broadcaster, so the rename originates here; the consumer-side rename already
+  landed in `culture-agent-template`. Tracks
+  [#48](https://github.com/agentculture/guildmaster/issues/48).
+- Align the documented `devex` version floor to `>=0.21` in the `cicd`
+  `SKILL.md` and `workflow.sh` install hint (were `>=0.1`) — the `await`-era
+  features need `>=0.21` (installed `devex` is 0.25.0). The `agtag` `>=0.1` floor
+  is unrelated and unchanged.
+
 ## [0.8.3] - 2026-05-30
 
 ### Added
@@ -117,7 +140,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   redirects. Updated `docs/skill-sources.md` to record `grant` as the live
   downstream consumer: renamed `shushu` → `grant` in the `run-tests` and
   `version-bump` Downstream columns, added `grant` to the `cicd` column with a
-  "still named `pr-review`" caveat (its copy is the pre-agex `cicd`), and
+  "still named `pr-review`" caveat (its copy is the pre-devex `cicd`), and
   refreshed the maintenance notes (old-skill-dir-name class, the
   no-`culture.yaml` class — `grant`'s repo has no committed `culture.yaml` yet —
   and a `shushu` → `grant` rename note mirroring `agentpypi` → `auntiepypi`).
@@ -430,7 +453,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - The three vendored SKILL.md files carry a `type: command` frontmatter
-  divergence from their verbatim devague upstream: culture/agex's
+  divergence from their verbatim devague upstream: culture/devex's
   `core.skill_loader` requires `name` + `description` + `type:`, and a type-less
   SKILL.md is silently skipped by `backends/claude_code/probe.py`. guildmaster
   declares an agent in `culture.yaml`, so the addition is load-bearing on the

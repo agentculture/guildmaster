@@ -1,6 +1,6 @@
 [project]
 name = "guild-cli"
-version = "0.8.3"
+version = "0.8.4"
 description = "guildmaster — an agent and CLI that manages skills for the AgentCulture mesh."
 readme = "README.md"
 license = "MIT"

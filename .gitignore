@@ -223,5 +223,7 @@ __marimo__/
 # devague working state (not committed by default)
 .devague/reviews/
 
-# agex (cicd) per-checkout working dir
+# devex (cicd) per-checkout working dir
+.devex/
+# legacy: devex still writes .agex/ as of 0.28.0
 .agex/

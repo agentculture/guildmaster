@@ -61,7 +61,7 @@ chmod +x .claude/skills/{{SKILL}}/scripts/*.sh 2>/dev/null || true
 ## Acceptance criteria
 
 - `.claude/skills/{{SKILL}}/SKILL.md` is present with frontmatter
-  `name: {{SKILL}}`. **On the culture/agex backend, also add
+  `name: {{SKILL}}`. **On the culture/devex backend, also add
   `type: command`** — `core.skill_loader` requires all of `name`,
   `description`, and `type:`, and a SKILL.md lacking `type:` is silently
   skipped by `backends/claude_code/probe.py`.

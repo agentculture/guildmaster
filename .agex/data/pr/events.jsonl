@@ -1,0 +1,49 @@
+{"ts":"2026-05-26T14:37:41.013131+00:00","type":"pr_opened","pr":27,"title":"feat(create): guild create \u2014 provision a brand-new sibling end-to-end (v1, from-scratch scaffold)"}
+{"ts":"2026-05-26T14:39:46.490293+00:00","type":"readiness_arrived","pr":27,"waited_secs":120}
+{"ts":"2026-05-26T14:39:51.420962+00:00","type":"pr_read","pr":27,"comment_count":3,"threads_unresolved":0,"ci_state":"failure"}
+{"ts":"2026-05-26T16:07:07.034926+00:00","type":"pr_opened","pr":28,"title":"feat(create): guild create \u2014 provision a sibling by instantiating culture-agent-template"}
+{"ts":"2026-05-26T16:08:10.496342+00:00","type":"readiness_arrived","pr":28,"waited_secs":60}
+{"ts":"2026-05-26T16:08:15.148595+00:00","type":"pr_read","pr":28,"comment_count":3,"threads_unresolved":0,"ci_state":"failure"}
+{"ts":"2026-05-26T16:17:12.181105+00:00","type":"readiness_arrived","pr":28,"waited_secs":0}
+{"ts":"2026-05-26T16:17:17.188836+00:00","type":"pr_read","pr":28,"comment_count":6,"threads_unresolved":3,"ci_state":"failure"}
+{"ts":"2026-05-26T16:23:57.121700+00:00","type":"readiness_arrived","pr":28,"waited_secs":0}
+{"ts":"2026-05-26T16:24:01.977184+00:00","type":"pr_read","pr":28,"comment_count":9,"threads_unresolved":1,"ci_state":"ok"}
+{"ts":"2026-05-26T17:19:57.760740+00:00","type":"pr_read","pr":29,"comment_count":3,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-26T18:15:35.526692+00:00","type":"pr_opened","pr":33,"title":"feat(ledger): register dominion-breaker as a downstream consumer"}
+{"ts":"2026-05-26T18:16:38.737404+00:00","type":"readiness_arrived","pr":33,"waited_secs":60}
+{"ts":"2026-05-26T18:16:43.162641+00:00","type":"pr_read","pr":33,"comment_count":3,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-26T22:46:51.607198+00:00","type":"pr_opened","pr":35,"title":"feat(ledger): register convertible as a downstream consumer (#34)"}
+{"ts":"2026-05-26T22:47:54.491910+00:00","type":"readiness_arrived","pr":35,"waited_secs":60}
+{"ts":"2026-05-26T22:47:59.110384+00:00","type":"pr_read","pr":35,"comment_count":3,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-26T22:50:06.235844+00:00","type":"pr_read","pr":35,"comment_count":3,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-28T19:26:22.893232+00:00","type":"pr_opened","pr":37,"title":"feat(ledger): register jetson as a downstream consumer"}
+{"ts":"2026-05-28T19:27:26.176749+00:00","type":"readiness_arrived","pr":37,"waited_secs":60}
+{"ts":"2026-05-28T19:27:30.729084+00:00","type":"pr_read","pr":37,"comment_count":3,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-28T19:52:43.413355+00:00","type":"pr_opened","pr":38,"title":"feat(create): add --dist to set the PyPI distribution name"}
+{"ts":"2026-05-28T19:53:46.545512+00:00","type":"readiness_arrived","pr":38,"waited_secs":60}
+{"ts":"2026-05-28T19:53:50.767495+00:00","type":"pr_read","pr":38,"comment_count":3,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-28T20:48:33.632282+00:00","type":"pr_read","pr":38,"comment_count":4,"threads_unresolved":1,"ci_state":"ok"}
+{"ts":"2026-05-28T20:51:57.099195+00:00","type":"pr_batch_replied","pr":38,"count":0,"resolved":0}
+{"ts":"2026-05-28T20:52:56.397754+00:00","type":"pr_reply","pr":38,"thread_id":"PRRT_kwDOSmFcFM6FgU5v","in_reply_to":3320309454}
+{"ts":"2026-05-28T20:52:58.057844+00:00","type":"pr_reply","pr":38,"thread_id":null,"in_reply_to":null}
+{"ts":"2026-05-28T20:52:58.070985+00:00","type":"pr_batch_replied","pr":38,"count":2,"resolved":1}
+{"ts":"2026-05-29T15:21:42.126158+00:00","type":"pr_opened","pr":39,"title":"feat(ci): wire guildmaster into SonarCloud via coverage.xml"}
+{"ts":"2026-05-29T15:21:43.660838+00:00","type":"pr_review_triggered","pr":39,"command":"/agentic_review"}
+{"ts":"2026-05-29T15:22:46.737797+00:00","type":"readiness_arrived","pr":39,"waited_secs":60}
+{"ts":"2026-05-29T15:22:51.149640+00:00","type":"pr_read","pr":39,"comment_count":5,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-29T15:40:54.276102+00:00","type":"pr_opened","pr":40,"title":"feat(ledger): rename shushu\u2192grant downstream consumer"}
+{"ts":"2026-05-29T15:40:55.738656+00:00","type":"pr_review_triggered","pr":40,"command":"/agentic_review"}
+{"ts":"2026-05-29T15:41:58.906846+00:00","type":"readiness_arrived","pr":40,"waited_secs":60}
+{"ts":"2026-05-29T15:42:03.928122+00:00","type":"pr_read","pr":40,"comment_count":5,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-29T16:31:16.861381+00:00","type":"pr_opened","pr":41,"title":"ci(sonar): emit repo-relative coverage paths via relative_files"}
+{"ts":"2026-05-29T16:31:18.029730+00:00","type":"pr_review_triggered","pr":41,"command":"/agentic_review"}
+{"ts":"2026-05-29T16:32:21.693756+00:00","type":"readiness_arrived","pr":41,"waited_secs":60}
+{"ts":"2026-05-29T16:32:26.199040+00:00","type":"pr_read","pr":41,"comment_count":5,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-29T21:13:37.848541+00:00","type":"pr_opened","pr":44,"title":"feat(create): repo\u2260command split via --command / --pkg (#43)"}
+{"ts":"2026-05-29T21:13:39.161131+00:00","type":"pr_review_triggered","pr":44,"command":"/agentic_review"}
+{"ts":"2026-05-29T21:14:42.366564+00:00","type":"readiness_arrived","pr":44,"waited_secs":60}
+{"ts":"2026-05-29T21:14:46.861746+00:00","type":"pr_read","pr":44,"comment_count":5,"threads_unresolved":0,"ci_state":"ok"}
+{"ts":"2026-05-29T21:36:40.188112+00:00","type":"pr_opened","pr":45,"title":"feat(ledger): register reachy-mini-cli as a downstream consumer"}
+{"ts":"2026-05-29T21:36:41.320345+00:00","type":"pr_review_triggered","pr":45,"command":"/agentic_review"}
+{"ts":"2026-05-29T21:37:44.173212+00:00","type":"readiness_arrived","pr":45,"waited_secs":60}
+{"ts":"2026-05-29T21:37:50.043741+00:00","type":"pr_read","pr":45,"comment_count":5,"threads_unresolved":0,"ci_state":"ok"}

@@ -157,7 +157,7 @@ locally-hosted model via `acp`, the runtime prompt is `AGENTS.md` and
 ## Finishing a branch: default to a PR
 
 When work on a branch is complete and tests pass, **push the branch and open a
-Pull Request** via the `cicd` skill (`workflow.sh open` / `agex pr open`) — do
+Pull Request** via the `cicd` skill (`workflow.sh open` / `devex pr open`) — do
 not pause on an interactive "what next?" menu. This is the integration point for
 the whole `branch → implement → bump version → PR` workflow, and it overrides
 the Superpowers `finishing-a-development-branch` skill's default pause.
