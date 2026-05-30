@@ -73,7 +73,7 @@ you are implementing. Results go to stdout, diagnostics to stderr.
 Human gates (three only):
   1. The exported spec (already closed by the /think leg).
   2. This implementation split plan (go/no-go to assign to workforce).
-  3. The final PR (opened by the main agent via `cicd` / `agex pr open`).
+  3. The final PR (opened by the main agent via `cicd` / `devex pr open`).
 
 The devague CLI is non-orchestrating (#20): `devague plan waves` describes
 the graph; the operator performs the fan-out. One worktree per task; TDD
