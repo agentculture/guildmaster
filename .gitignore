@@ -225,3 +225,5 @@ __marimo__/
 
 # devex (cicd) per-checkout working dir
 .devex/
+# legacy: devex still writes .agex/ as of 0.28.0
+.agex/

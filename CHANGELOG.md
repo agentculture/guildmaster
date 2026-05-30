@@ -14,8 +14,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   skills and docs guildmaster owns: `CLAUDE.md`, the vendored `cicd`
   (`SKILL.md`, `workflow.sh`, `pr-status.sh`), `communicate`
   (`skill-new-brief.md` template) and `assign-to-workforce` skills,
-  `docs/skill-sources.md`, `docs/cutover.md`, and `.gitignore` (`.agex/` →
-  `.devex/`). The `cicd` scripts now invoke `devex pr` and the internal
+  `docs/skill-sources.md`, `docs/cutover.md`, and `.gitignore` (now ignores
+  both `.devex/` and the still-used `.agex/` — `devex` 0.28.0 still writes its
+  per-checkout working dir to `.agex/`). The `cicd` scripts now invoke `devex
+  pr` and the internal
   identifiers became `DEVEX_AGENT` / `STEWARD_DEVEX_AGENT` / `require_devex`.
   guildmaster is the canonical owner of `cicd` / `communicate` and the sole
   broadcaster, so the rename originates here; the consumer-side rename already
