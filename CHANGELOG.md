@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2026-05-30
+
+### Added
+
+- **Register `dgx-spark-cli` as a downstream consumer** in
+  `docs/skill-sources.md`. Provisioned `agentculture/dgx-spark-cli` via
+  `guild create --apply` (`--command spark`, `--backend claude`) — an agent
+  and CLI for operating an NVIDIA DGX Spark (Grace-Blackwell) workstation —
+  adding it to the downstream column of every canonical skill. The PyPI dist
+  defaults to the repo token (`dgx-spark-cli`); the console command is the
+  shorter `spark`.
+
+### Changed
+
+- Refresh `uv.lock` to the current package version.
+
+### Fixed
+
 ## [0.8.2] - 2026-05-30
 
 ### Added
