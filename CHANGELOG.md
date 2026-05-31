@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-05-31
+
+### Added
+
+- **Vendor the `outsource` skill** (`.claude/skills/outsource/`) — guildmaster
+  now runs the skill it will broadcast. `outsource` hands a scoped repo task to
+  [`convertible`](https://github.com/agentculture/convertible) — a *different*
+  engine/mind, not a stronger one — via three verbs: `explore` (read-only
+  investigation), `review` (a diverse second opinion on the committed diff, the
+  headline verb), and `write` (delegate a small implementation to a drive branch
+  or PR). `explore`/`review` run isolated in a throwaway `git worktree` at HEAD;
+  `write` refuses a dirty tree unless `--allow-dirty`.
+- **Register `outsource`'s origin** in `guild.skills.INBOUND_ORIGINS`
+  (`agentculture/convertible`) so `guild teach` / `onboard` / `overview` attribute
+  it to convertible and frame it as *re-broadcast*, the same inbound pattern as
+  the devague workflow trio.
+- **Ledger:** new "Inbound first-party skill (origin = `convertible`,
+  re-broadcast by `guildmaster`)" section in `docs/skill-sources.md` recording
+  `outsource`, its sole divergence (a reframed Provenance paragraph; upstream
+  already carries `type: command`), and its runtime dependency on the
+  `convertible` CLI. Downstream is empty by design — guildmaster is the first
+  holder outside convertible. Cross-links
+  [`culture-agent-template#8`](https://github.com/agentculture/culture-agent-template/issues/8),
+  which proposes adding `outsource` to the clone template.
+
+### Changed
+
+### Fixed
+
 ## [0.8.5] - 2026-05-31
 
 ### Added

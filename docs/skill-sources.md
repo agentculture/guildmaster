@@ -94,6 +94,42 @@ Downstream is empty by design: these are still being introduced to the mesh.
 `guild teach --new --skill <name> --to <repos>` frames them as *new* skills to
 add fresh (not stale copies to resync).
 
+## Inbound first-party skill (origin = `convertible`, re-broadcast by `guildmaster`)
+
+`outsource` flows the **same opposite direction** as the devague trio above: a
+sibling, [`convertible`](https://github.com/agentculture/convertible), is its
+author/upstream; guildmaster pulls it from convertible and re-broadcasts it to
+the mesh. `cite, don't import` still applies — re-sync, when it later changes
+upstream, from `../convertible/.claude/skills/outsource/`.
+
+Where the devague skills drive a deterministic CLI, `outsource` is a portable
+wrapper (`scripts/outsource.sh`) that drives the **`convertible` CLI** so a
+Claude agent can hand a scoped task to a *different* engine/mind (default: a
+local vLLM `Qwen3.6-27B`) — `explore` (read-only investigation), `review` (a
+diverse second opinion on the committed diff, the headline verb), and `write`
+(delegate a small implementation to a drive branch / PR). `explore`/`review` run
+isolated in a throwaway `git worktree` at HEAD; `write` refuses a dirty tree.
+
+**Divergence from verbatim.** The upstream copy already carries `type: command`
+(load-bearing on the culture backend), so no frontmatter change was needed. The
+**only** edit is the SKILL.md *Provenance* paragraph: upstream says "the inverse
+of the other skills … which convertible vendors *from* guildmaster" — true in
+convertible's repo, misleading here — reframed to "guildmaster re-broadcasts it
+… tracking it in `docs/skill-sources.md`." No script or prompt body is edited.
+
+**Runtime dependency:** the `convertible` CLI on `PATH`
+(`uv tool install convertible-cli`) plus a reachable engine (override the local
+default via `--engine` / `--model` / `--base-url` or `CONVERTIBLE_*` env). Absent
+the CLI, the wrapper exits with a clear install hint rather than crashing.
+
+| Skill | Origin | Downstream copies (known) | Notes |
+|-------|--------|---------------------------|-------|
+| `outsource` | `convertible` (`agentculture/convertible`, `../convertible/.claude/skills/outsource/`) | — (broadcast pending; [`culture-agent-template#8`](https://github.com/agentculture/culture-agent-template/issues/8) proposes adding it to the clone template) | First-party convertible skill: hand a scoped task to a *different* engine/mind. Verbs `explore` / `review` / `write`. **Divergence:** Provenance paragraph reframed for re-broadcast (above); `type: command` already present upstream. Runtime dep: `uv tool install convertible-cli` + a reachable engine. |
+
+Downstream is empty by design — guildmaster is the first holder outside
+convertible. `guild teach --new --skill outsource --to <repos>` frames it as a
+*new* skill when broadcasting.
+
 ## guildmaster-origin skills (origin = `guildmaster`)
 
 These are guildmaster's **own** operator skills — not vendored from anyone and
