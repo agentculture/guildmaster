@@ -24,3 +24,9 @@ ignores:
   # devague working state (frames/plans are committed as JSON; reviews are
   # git-ignored) — not hand-authored prose.
   - ".devague/**"
+  # Vendored skill prompt templates (e.g. outsource's explore/review/write) are
+  # raw LLM instruction text fed verbatim to a model, not hand-authored docs —
+  # they intentionally open with prose, not an H1 (MD041), and carry $PLACEHOLDER
+  # tokens. Linting them as markdown is a category error, and editing them to
+  # satisfy a linter would fork the cited-verbatim copy (cite-don't-import).
+  - ".claude/skills/**/prompts/**"
