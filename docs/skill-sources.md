@@ -124,11 +124,7 @@ the CLI, the wrapper exits with a clear install hint rather than crashing.
 
 | Skill | Origin | Downstream copies (known) | Notes |
 |-------|--------|---------------------------|-------|
-| `outsource` | `convertible` (`agentculture/convertible`, `../convertible/.claude/skills/outsource/`) | — (broadcast pending; [`culture-agent-template#8`](https://github.com/agentculture/culture-agent-template/issues/8) proposes adding it to the clone template) | First-party convertible skill: hand a scoped task to a *different* engine/mind. Verbs `explore` / `review` / `write`. **Divergence:** Provenance paragraph reframed for re-broadcast (above); `type: command` already present upstream. Runtime dep: `uv tool install convertible-cli` + a reachable engine. |
-
-Downstream is empty by design — guildmaster is the first holder outside
-convertible. `guild teach --new --skill outsource --to <repos>` frames it as a
-*new* skill when broadcasting.
+| `outsource` | `convertible` (`agentculture/convertible`, `../convertible/.claude/skills/outsource/`) | `agentculture/culture-agent-template` ([PR #9](https://github.com/agentculture/culture-agent-template/pull/9)), `agentculture/katvan` ([PR #51](https://github.com/agentculture/katvan/pull/51)) | First-party convertible skill: hand a scoped task to a *different* engine/mind. Verbs `explore` / `review` / `write`. **Divergence:** Provenance paragraph reframed for re-broadcast (above); `type: command` already present upstream. Runtime dep: `uv tool install convertible-cli` + a reachable engine. |
 
 ## guildmaster-origin skills (origin = `guildmaster`)
 
