@@ -15,12 +15,14 @@ from __future__ import annotations
 
 # Skills whose origin is a *sibling* (not guildmaster): re-broadcasting them
 # carries an origin-attribution block so consumers know guildmaster only
-# re-broadcasts. Mirrors the "Inbound workflow skills" section of
-# ``docs/skill-sources.md`` (the devague trio).
+# re-broadcasts. Mirrors the "Inbound workflow skills" + "Inbound first-party"
+# sections of ``docs/skill-sources.md`` (the devague trio; convertible's
+# ``outsource``).
 INBOUND_ORIGINS: dict[str, str] = {
     "think": "agentculture/devague",
     "spec-to-plan": "agentculture/devague",
     "assign-to-workforce": "agentculture/devague",
+    "outsource": "agentculture/convertible",
 }
 
 # guildmaster's own skills — present in ``.claude/skills/`` but NOT part of the
