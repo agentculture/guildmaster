@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5] - 2026-05-31
+
+### Added
+
+- **Register three new downstream consumers** in `docs/skill-sources.md`, each
+  provisioned via `guild create --apply` from `culture-agent-template`:
+  - `unsloth-cli` — agent + CLI that simplifies fine-tuning with Unsloth
+    (command `sloth`, import package `sloth`, dist `unsloth-cli`).
+  - `discord-bot-cli` — agent + CLI that gives an agent Discord access via a
+    bot (command `discord`; import package decoupled to `discord_bot_cli` so it
+    doesn't shadow the `discord.py` library; dist `discord-bot-cli`).
+  - `arxivist` — agent + CLI that fetches arXiv papers, maintains a knowledge
+    base, implements paper solutions, and benchmarks them against the papers'
+    claims (command = package = dist = `arxivist`).
+
+  Each is registered across all canonical supplied skills (`agent-config`,
+  `cicd`, `communicate`, `doc-test-alignment`, `pypi-maintainer`, `run-tests`,
+  `sonarclaude`, `version-bump`) and the inbound devague workflow skills
+  (`think`, `spec-to-plan`, `assign-to-workforce`).
+
+### Changed
+
+### Fixed
+
 ## [0.8.4] - 2026-05-30
 
 ### Changed
